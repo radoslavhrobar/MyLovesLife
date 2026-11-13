@@ -44,25 +44,31 @@ function create() {
     const gameHeight = this.sys.game.config.height;
 
     this.cameras.main.setBackgroundColor('#a16c4b');
-    walls = this.physics.add.staticGroup();
 
-    // 1. KOBEREC CEZ CELÉ PLÁTNO
-    // Koberec teraz začína na súradniciach 0,0 a kopíruje plnú šírku a výšku hry
+    const carpetWidth = gameWidth * 0.7;
+    const carpetHeight = gameHeight * 0.6;
+    const carpetX = (gameWidth - carpetWidth) / 2;
+    const carpetY = (gameHeight - carpetHeight) / 2;
+
     let carpet = this.add.graphics();
     carpet.fillStyle(0x3a5a40, 1);
-    carpet.fillRect(0, 0, gameWidth, gameHeight);
+    carpet.fillRect(carpetX, carpetY, carpetWidth, carpetHeight);
 
     // 2. TENKÉ STENY NA ÚPLNÝCH OKRAJOCH PLÁTNA
-    const wallThick = 10; // Tenučké steny (10 pixelov)
-    // Horná stena
-    walls.create(gameWidth / 2, -wallThick / 2).setSize(gameWidth, wallThick).setVisible(false);
-    // Dolná stena
-    walls.create(gameWidth / 2, gameHeight + wallThick / 2).setSize(gameWidth, wallThick).setVisible(false);
-    // Ľavá stena
-    walls.create(-wallThick / 2, gameHeight / 2).setSize(wallThick, gameHeight).setVisible(false);
-    // Pravá stena
-    walls.create(gameWidth + wallThick / 2, gameHeight / 2).setSize(wallThick, gameHeight).setVisible(false);
+    const wallThick = 12; // Hrúbka steny v pixeloch
+    let wallGraphics = this.add.graphics();
+    wallGraphics.fillStyle(0x7f8c8d, 1);
+    wallGraphics.fillRect(0, 0, gameWidth, wallThick); // Horná stena
+    wallGraphics.fillRect(0, gameHeight - wallThick, gameWidth, wallThick); // Dolná stena
+    wallGraphics.fillRect(0, 0, wallThick, gameHeight); // Ľavá stena
+    wallGraphics.fillRect(gameWidth - wallThick, 0, wallThick, gameHeight); // Pravá stena
 
+    walls = this.physics.add.staticGroup();
+    walls.create(gameWidth / 2, wallThick / 2).setSize(gameWidth, wallThick).setVisible(false);
+    walls.create(gameWidth / 2, gameHeight - wallThick / 2).setSize(gameWidth, wallThick).setVisible(false);
+    walls.create(wallThick / 2, gameHeight / 2).setSize(wallThick, gameHeight).setVisible(false);
+    walls.create(gameWidth - wallThick / 2, gameHeight / 2).setSize(wallThick, gameHeight).setVisible(false);
+    
     // 3. VYTVORENIE HRÁČA (Vycentrovaný v strede plátna)
     let playerGraphic = this.make.graphics({ x: 0, y: 0, add: false });
     playerGraphic.fillStyle(0x3498db, 1);
@@ -77,9 +83,8 @@ function create() {
     cursors = this.input.keyboard.createCursorKeys();
     this.input.addPointer(2);
 
-    // 4. DOTYKOVÉ TLAČIDLÁ (Umiestnené v dolnej časti na koberci)
+    // 5. DOTYKOVÉ TLAČIDLÁ (Môžu prekrývať drevo aj koberec)
     const step = 70;
-    // Šípky budú posunuté kúsok od krajov a spodku, aby sa dobre stláčali palcom
     const startX = gameWidth * 0.08;
     const startY = gameHeight - (step * 2.5);
 
