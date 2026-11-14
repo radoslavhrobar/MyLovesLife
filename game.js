@@ -21,14 +21,31 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
-let player;
-let cursors;
 let walls;
+let bed;
 
+let player;
+
+let statsContainer;
+let isStatsVisible = false;
+let panelWidth = 140;
+let panelHeight = 125;
+const panelPosition = panelHeight / 2 + 25;
+
+let playerStats = {
+    energia: 85,
+    nalada: 90,
+    hlad: 40,
+    smad: 65,
+    zamilovanost: 100
+};
+
+let cursors;
 let moveLeft = false;
 let moveRight = false;
 let moveUp = false;
 let moveDown = false;
+
 
 function preload() {
     let btnGraphic = this.make.graphics({ x: 0, y: 0, add: false });
@@ -76,9 +93,63 @@ function create() {
     playerGraphic.generateTexture('playerTexture', 40, 40);
 
     // Umiestnenie do presného geometrického stredu
-    player = this.physics.add.sprite(gameWidth / 2, gameHeight / 2, 'playerTexture');
+    player = this.physics.add.sprite(gameWidth / 2, gameHeight / 2, 'playerTexture').setInteractive();
     player.setCollideWorldBounds(true);
     this.physics.add.collider(player, walls);
+
+
+    // 4. VYTVORENIE BUBLINY S UKAZOVATEĽMI (ENERGIA, NÁLADA, HLAD, SMÄD)
+    statsContainer = this.add.container(player.x, player.y - panelPosition);
+    statsContainer.setVisible(isStatsVisible);
+    statsContainer.setDepth(10);
+
+    let panelBg = this.add.graphics();
+    panelBg.fillStyle(0x000000, 0.75);
+    panelBg.fillRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 8);
+    panelBg.lineStyle(2, 0xffffff, 0.5);
+    panelBg.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 8);
+    statsContainer.add(panelBg);
+
+    // Pomocná funkcia na vytvorenie jedného ukazovateľa (ikona + load bar)
+    const createStatBar = (yOffset, icon, value, barColor) => {
+        // Ikona naľavo
+        let iconText = this.add.text(-panelWidth / 2 + 10, yOffset, icon, { fontSize: '14px' }).setOrigin(0, 0.5);
+
+        // Sivé pozadie prázdneho baru (šírka 95px, výška 10px)
+        let barWidth = 95;
+        let barHeight = 10;
+        let barBg = this.add.graphics();
+        barBg.fillStyle(0x333333, 1);
+        barBg.fillRoundedRect(-35, yOffset - barHeight / 2, barWidth, barHeight, 4);
+
+        // Farebná výplň podľa aktuálnej hodnoty (0 až 100)
+        let fillWidth = (value / 100) * barWidth;
+        let barFill = this.add.graphics();
+        barFill.fillStyle(barColor, 1);
+        barFill.fillRoundedRect(-35, yOffset - barHeight / 2, fillWidth, barHeight, 4);
+
+        // Vloženie do hlavného kontajnera
+        statsContainer.add([iconText, barBg, barFill]);
+    };
+
+    const statsCount = Object.keys(playerStats).length;
+    const spacing = panelHeight / (statsCount + 1);
+    let currentY = (-panelHeight / 2) + spacing;
+    createStatBar(currentY, '❤️', playerStats.zamilovanost, 0xff4d6d);
+    currentY += spacing;
+    createStatBar(currentY, '⚡', playerStats.energia, 0xf1c40f);
+    currentY += spacing;
+    createStatBar(currentY, '😊', playerStats.nalada, 0x2ecc71);
+    currentY += spacing;
+    createStatBar(currentY, '🍔', playerStats.hlad, 0xe67e22);
+    currentY += spacing;
+    createStatBar(currentY, '💧', playerStats.smad, 0x3498db);
+    currentY += spacing;
+
+    player.on('pointerdown', () => {
+        isStatsVisible = !isStatsVisible; // Otočí hodnotu (true -> false, false -> true)
+        statsContainer.setVisible(isStatsVisible);
+    });
 
     cursors = this.input.keyboard.createCursorKeys();
     this.input.addPointer(2);
@@ -117,5 +188,10 @@ function update() {
         player.setVelocityY(-speed);
     } else if (cursors.down.isDown || moveDown) {
         player.setVelocityY(speed);
+    }
+
+    if (statsContainer) {
+        statsContainer.x = player.x;
+        statsContainer.y = player.y - panelPosition;
     }
 }
