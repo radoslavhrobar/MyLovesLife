@@ -135,9 +135,9 @@ function create() {
     statsContainer.setDepth(10);
 
     let panelBg = this.add.graphics();
-    panelBg.fillStyle(0x000000, 0.75);
+    panelBg.fillStyle(0xff72c4, 0.75);
     panelBg.fillRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 8);
-    panelBg.lineStyle(2, 0xffffff, 0.5);
+    panelBg.lineStyle(2, 0x000, 0.5);
     panelBg.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 8);
     statsContainer.add(panelBg);
 
@@ -188,7 +188,7 @@ function create() {
             bedMenuContainer.setVisible(!bedMenuContainer.visible);
         } else {
             // Krátka hláška, ak je hráč príliš ďaleko
-            showFloatingText(this, bed.x, bed.y - 90, 'Si ďaleko mima!');
+            showFloatingText(this, bed.x + 40, bed.y - 90, 'Si ďaleko mimka!');
         }
     });
 
@@ -375,56 +375,90 @@ function openActivitySelectionModal(scene, type) {
 
         // Kliknutie na fotku spustí 5-sekundový časovač
         photo.on('pointerdown', () => {
-            startActivityTimer(scene, opt);
+            startActivityTimer(scene, opt, type);
         });
 
         modalContainer.add(photo);
     });
 } 
 
-function startActivityTimer(scene, option) {
-    // 1. Zatvoríme veľké okno s výberom fotiek v strede obrazovky
+function startActivityTimer(scene, option, type) {
+    // 1. Zatvoríme veľké okno s výberom fotiek
     modalContainer.removeAll(true);
     modalContainer.setVisible(false);
 
-    // 2. Vytvoríme malý lokálny kontajner priamo nad posteľou (rovnaká pozícia ako bedMiniMenu)
-    let timerContainer = scene.add.container(bed.x, bed.y - 120);
+    // 2. Vytvoríme kontajner nad posteľou (posunutý o +25 doprava, aby nepretiekol cez ľavú stenu)
+    let timerContainer = scene.add.container(bed.x + 25, bed.y - 125);
     timerContainer.setDepth(35);
 
     const w = 180;
-    const h = 85;
+    // Ak je to film, okno spravíme o niečo vyššie (115px), aby sa tam pekne zmestila fotka
+    const h = type === 'movie' ? 115 : 85;
 
-    // Tmavé pozadie bubliny nad posteľou
+    // Pozadie bubliny
     let bg = scene.add.graphics();
     bg.fillStyle(0x1e272e, 0.95);
     bg.fillRoundedRect(-w / 2, -h / 2, w, h, 10);
-    bg.lineStyle(2, 0x3498db, 0.9);
+    bg.lineStyle(2, 0xff72c4, 0.9);
     bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 10);
     timerContainer.add(bg);
 
-    // Zmenšené texty prispôsobené bubline nad posteľou
-    let statusText = scene.add.text(0, -24, `${option.icon} ${option.label}`, {
-        fontSize: '13px',
-        fill: '#fff',
-        fontStyle: 'bold'
-    }).setOrigin(0.5);
+    // Zvislé pozície prvkov podľa typu aktivity
+    let timeY = 0;
+    let barY = 0;
 
-    let timeText = scene.add.text(0, -4, 'Zostáva: 5.0 s', {
+    // 3. ROZLÍŠENIE SPÁNKU A FILMU
+    if (type === 'sleep') {
+        // SPÁNOK: Ikona spáča + animované "Zzz..."
+        let sleepIcon = scene.add.text(-25, -22, `${option.icon}  `, { fontSize: '20px' }).setOrigin(0.5);
+        let zzzText = scene.add.text(12, -20, '💤😴', {
+            fontSize: '15px',
+            fill: '#74b9ff',
+            fontStyle: 'italic bold'
+        }).setOrigin(0.5);
+
+        timerContainer.add([sleepIcon, zzzText]);
+
+        // Animácia vznášania sa a pulzovania "Zzz..."
+        scene.tweens.add({
+            targets: zzzText,
+            y: -30,           // Jemne stúpne nahor
+            scale: 1.15,      // Mierne sa zväčší
+            alpha: 0.4,       // Trochu spriehľadnie
+            duration: 900,    // Rýchlosť jedného nádychu/výdychu (0.9 sekundy)
+            yoyo: true,       // Vráti sa plynulo späť
+            repeat: -1        // Opakuje sa dookola, kým neskončí časovač
+        });
+
+        timeY = -2;
+        barY = 16;
+    } else {
+        // FILM: Miniatúra vybranej fotky bez textu
+        let moviePhoto = scene.add.image(0, -24, option.img);
+        moviePhoto.setDisplaySize(75, 48); // Pekná malá náhľadová fotka
+        timerContainer.add(moviePhoto);
+
+        timeY = 12;
+        barY = 30;
+    }
+
+    // Text zostávajúceho času
+    let timeText = scene.add.text(0, timeY, type === 'sleep' ? 'Chrapkaš: 5.0 s' : 'Pozerkaš: 5.0 s', {
         fontSize: '12px',
         fill: '#bdc3c7'
     }).setOrigin(0.5);
 
-    // Pozadie loading baru (šírka 150px)
+    // Pozadie loading baru
     const barWidth = 150;
     let barBg = scene.add.graphics();
     barBg.fillStyle(0x333333, 1);
-    barBg.fillRoundedRect(-barWidth / 2, 12, barWidth, 14, 7);
+    barBg.fillRoundedRect(-barWidth / 2, barY, barWidth, 12, 6);
 
     // Aktívny loading bar
     let barFill = scene.add.graphics();
-    timerContainer.add([statusText, timeText, barBg, barFill]);
+    timerContainer.add([timeText, barBg, barFill]);
 
-    // 3. 5-sekundový plynulý odpočet
+    // 4. 5-sekundový plynulý odpočet
     scene.tweens.addCounter({
         from: 0,
         to: 100,
@@ -432,17 +466,17 @@ function startActivityTimer(scene, option) {
         onUpdate: (tween) => {
             const progress = tween.getValue();
             const remainingSeconds = ((100 - progress) / 100 * 5).toFixed(1);
-            timeText.setText(`Zostáva: ${remainingSeconds} s`);
+            timeText.setText(type === 'sleep' ? `Chrapkaš: ${remainingSeconds} s` : `Pozerkaš: ${remainingSeconds} s`);
 
             barFill.clear();
-            barFill.fillStyle(0x2ecc71, 1);
-            barFill.fillRoundedRect(-barWidth / 2, 12, (progress / 100) * barWidth, 14, 7);
+            barFill.fillStyle(0xff72c4, 1);
+            barFill.fillRoundedRect(-barWidth / 2, barY, (progress / 100) * barWidth, 12, 6);
         },
         onComplete: () => {
             // Doplnenie štatistiky postavy
             playerStats[option.stat] = Math.min(100, playerStats[option.stat] + option.boost);
 
-            // Zničenie bubliny časovača a odomknutie pohybu
+            // Zničenie bubliny a odomknutie pohybu
             timerContainer.destroy();
             isModalOpen = false;
 
@@ -451,10 +485,11 @@ function startActivityTimer(scene, option) {
     });
 }
 
+
 function showFloatingText(scene, x, y, message) {
     let txt = scene.add.text(x, y, message, {
         fontSize: '18px',
-        fill: '#2ecc71',
+        fill: '#ff72c4',
         fontStyle: 'bold',
         stroke: '#000',
         strokeThickness: 4
