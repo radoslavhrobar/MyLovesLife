@@ -1,5 +1,5 @@
 import { gameState, showFloatingText } from './state.js';
-import { createTouchControls, createStatsBubble, openBedModal } from './ui.js';
+import { createTouchControls, createStatsBubble, openBedModal, createRoundedButton} from './ui.js';
 
 export default class MainScene extends Phaser.Scene {
     constructor() {
@@ -106,8 +106,9 @@ export default class MainScene extends Phaser.Scene {
         dogG.fillStyle(0x1e272e, 1).fillRoundedRect(40, 65, 40, 55, { tl: 20, tr: 20, bl: 0, br: 0 });
         dogG.generateTexture('doghouseTexture', 120, 120);
 
-        let doghouse = this.outsideObstacles.create(this.wallThick + 75, this.gameHeight - this.wallThick - 75, 'doghouseTexture');
-        this.outsideGroup.add(doghouse);
+        this.doghouse = this.outsideObstacles.create(this.wallThick + 75, this.gameHeight - this.wallThick - 75, 'doghouseTexture')
+            .setInteractive({ useHandCursor: true });
+        this.outsideGroup.add(this.doghouse);
 
         let treeG = this.make.graphics({ x: 0, y: 0, add: false });
         treeG.fillStyle(0x5d4037, 1).fillRect(35, 60, 20, 40);
@@ -129,6 +130,21 @@ export default class MainScene extends Phaser.Scene {
 
         this.player = this.physics.add.sprite(this.gameWidth / 2, this.gameHeight / 2, 'playerTexture').setInteractive().setDepth(8).setCollideWorldBounds(true);
 
+        let theoG = this.make.graphics({ x: 0, y: 0, add: false }).fillStyle(0xd35400, 1).fillRect(0, 0, 36, 36);
+        theoG.generateTexture('theoTexture', 36, 36);
+
+        this.theo = this.physics.add.sprite(this.doghouse.x + 85, this.doghouse.y, 'theoTexture')
+            .setDepth(8)
+            .setCollideWorldBounds(true);
+
+        this.theo.setVisible(false);
+        this.theo.body.enable = false;
+        this.isTheoOutside = false;
+
+        this.physics.add.collider(this.theo, this.door);
+        this.physics.add.collider(this.theo, this.bottomWall);
+        this.physics.add.collider(this.theo, this.outsideObstacles);
+        this.physics.add.collider(this.player, this.theo);
         this.physics.add.collider(this.player, this.door);
         this.physics.add.collider(this.player, this.roomWalls);
         this.physics.add.collider(this.player, this.bottomWall);
@@ -158,7 +174,7 @@ export default class MainScene extends Phaser.Scene {
             // Kontrola vzdialenosti od stredu dverí (getCenter) je presnejšia
             const doorCenter = this.door.getCenter();
             if (Phaser.Math.Distance.Between(this.player.x, this.player.y, doorCenter.x, doorCenter.y) <= 100) {
-                this.doorActionBtn.setText(gameState.currentLocation === 'room' ? 'POME VON! ☀️' : 'POME DOMOV!🏠');
+                this.doorActionBtn.label.setText(gameState.currentLocation === 'room' ? 'POME VON! ☀️' : 'POME DOMOV!🏠');
                 this.doorMenu.setVisible(!this.doorMenu.visible);
                 this.bedMenu.setVisible(false);
             } else {
@@ -169,32 +185,84 @@ export default class MainScene extends Phaser.Scene {
             }
         });
 
+        this.doghouse.on('pointerdown', () => {
+            if (gameState.isModalOpen || gameState.currentLocation !== 'outside') return;
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) <= 130) {
+                this.dogActionBtn.label.setText(this.isTheoOutside ? 'MIESTO!🐕' : 'Thejko von!🐕');
+                this.doghouseMenu.setVisible(!this.doghouseMenu.visible);
+                this.doorMenu.setVisible(false);
+                this.bedMenu.setVisible(false);
+            } else {
+                showFloatingText(this, this.doghouse.x + 40, this.doghouse.y - 80, 'Príď bližšie k búde!');
+            }
+        });
+
         this.cursors = this.input.keyboard.createCursorKeys();
         this.input.addPointer(2);
         createTouchControls(this, this.gameWidth, this.gameHeight, this.touchControls);
     }
 
     setupMenus() {
-        // Mini menu postele
+        // 1. Mini menu postele
         this.bedMenu = this.add.container(this.bed.x, this.bed.y - 20).setDepth(25).setVisible(false);
-        let bedBg = this.add.graphics().fillStyle(0x1e272e, 0.9).fillRoundedRect(-75, -45, 150, 90, 10).lineStyle(2, 0xffffff, 0.6).strokeRoundedRect(-75, -45, 150, 90, 10);
-        let sleepBtn = this.add.text(0, -20, '😴 spať', { fontSize: '18px', fill: '#fff', backgroundColor: '#2c3e50', padding: { x: 12, y: 5 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        let movieBtn = this.add.text(0, 20, '🎬 kukať', { fontSize: '18px', fill: '#fff', backgroundColor: '#8e44ad', padding: { x: 12, y: 5 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        let bedBg = this.add.graphics()
+            .fillStyle(0x1e272e, 0.92)
+            .fillRoundedRect(-80, -50, 160, 100, 12)
+            .lineStyle(2, 0xffffff, 0.6)
+            .strokeRoundedRect(-80, -50, 160, 100, 12);
 
-        sleepBtn.on('pointerdown', () => { this.bedMenu.setVisible(false); openBedModal(this, this.gameWidth, this.gameHeight, this.bed, this.player, 'sleep'); });
-        movieBtn.on('pointerdown', () => { this.bedMenu.setVisible(false); openBedModal(this, this.gameWidth, this.gameHeight, this.bed, this.player, 'movie'); });
+        let sleepBtn = createRoundedButton(this, 0, -22, 136, 36, 'Idzem spať😴 ', 0x3498db, () => {
+            this.bedMenu.setVisible(false);
+            openBedModal(this, this.gameWidth, this.gameHeight, this.bed, this.player, 'sleep');
+        });
+
+        let movieBtn = createRoundedButton(this, 0, 22, 136, 36, 'Idzem kukať🎬', 0x9b59b6, () => {
+            this.bedMenu.setVisible(false);
+            openBedModal(this, this.gameWidth, this.gameHeight, this.bed, this.player, 'movie');
+        });
+
         this.bedMenu.add([bedBg, sleepBtn, movieBtn]);
 
-        // Mini menu dverí
+        // 2. Mini menu dverí
         this.doorMenu = this.add.container(this.door.x + 95, this.door.y + 50).setDepth(25).setVisible(false);
-        let doorBg = this.add.graphics().fillStyle(0x1e272e, 0.9).fillRoundedRect(-80, -45, 160, 90, 10).lineStyle(2, 0xffffff, 0.6).strokeRoundedRect(-80, -45, 160, 90, 10);
-        this.doorActionBtn = this.add.text(0, -18, 'POME VON! ☀️', { fontSize: '16px', fill: '#fff', backgroundColor: '#105f31', padding: { x: 10, y: 5 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        let stayBtn = this.add.text(0, 20, 'Zostať tu ❌', { fontSize: '15px', fill: '#fff', backgroundColor: '#2c3e50', padding: { x: 10, y: 4 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        let doorBg = this.add.graphics()
+            .fillStyle(0x1e272e, 0.92)
+            .fillRoundedRect(-90, -50, 180, 100, 12)
+            .lineStyle(2, 0xffffff, 0.6)
+            .strokeRoundedRect(-90, -50, 180, 100, 12);
 
-        this.doorActionBtn.on('pointerdown', () => { this.doorMenu.setVisible(false); this.switchLocation(gameState.currentLocation === 'room' ? 'outside' : 'room'); });
-        stayBtn.on('pointerdown', () => this.doorMenu.setVisible(false));
+        this.doorActionBtn = createRoundedButton(this, 0, -22, 156, 36, 'POME VON!☀️', 0x2ecc71, () => {
+            this.doorMenu.setVisible(false);
+            this.switchLocation(gameState.currentLocation === 'room' ? 'outside' : 'room');
+        });
+
+        let stayBtn = createRoundedButton(this, 0, 22, 156, 36, 'Zostať tu❌', 0x95a5a6, () => {
+            this.doorMenu.setVisible(false);
+        });
+
         this.doorMenu.add([doorBg, this.doorActionBtn, stayBtn]);
+
+        // 3. Mini menu búdy
+        this.doghouseMenu = this.add.container(this.doghouse.x + 25, this.doghouse.y - 115).setDepth(25).setVisible(false);
+        let dogBg = this.add.graphics()
+            .fillStyle(0x1e272e, 0.92)
+            .fillRoundedRect(-95, -50, 190, 100, 12)
+            .lineStyle(2, 0xffffff, 0.6)
+            .strokeRoundedRect(-95, -50, 190, 100, 12);
+
+        this.dogActionBtn = createRoundedButton(this, 0, -22, 164, 36, 'Thejko von!🐕', 0xff72c4, () => {
+            this.doghouseMenu.setVisible(false);
+            this.toggleTheo();
+        });
+
+        let feedBtn = createRoundedButton(this, 0, 22, 164, 36, 'Doplniť vodu..🥣', 0x3498db, () => {
+            this.doghouseMenu.setVisible(false);
+            showFloatingText(this, this.doghouse.x + 40, this.doghouse.y - 60, 'Voda doplnená!💧');
+        });
+
+        this.doghouseMenu.add([dogBg, this.dogActionBtn, feedBtn]);
     }
+
 
     switchLocation(target) {
         gameState.currentLocation = target;
@@ -248,8 +316,8 @@ export default class MainScene extends Phaser.Scene {
 
         showFloatingText(
             this,
-            isOutside ? this.player.x - 45 : this.player.x + 55,
-            isOutside ? this.player.y - 50 : this.player.y + 70,
+            isOutside ? this.player.x - 150 : this.player.x + 55,
+            isOutside ? this.player.y - 5 : this.player.y + 70,
             isOutside ? 'Si vonku!🌳' : 'Si domka!🏠'
         );
     }

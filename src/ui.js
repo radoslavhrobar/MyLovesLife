@@ -80,7 +80,7 @@ export function updateStatsBars() {
 
 export function openBedModal(scene, gameWidth, gameHeight, bed, player, type) {
     gameState.isModalOpen = true;
-    let modalContainer = scene.add.container(gameWidth / 2, gameHeight / 2).setDepth(50).setVisible(false);
+    let modalContainer = scene.add.container(gameWidth / 2, gameHeight / 2).setDepth(50)
 
     const options = bedOptions[type];
     const count = options.length;
@@ -194,3 +194,33 @@ function startActivityTimer(scene, bed, player, option, type) {
         }
     });
 }
+
+export function createRoundedButton(scene, x, y, width, height, text, color, onClick) {
+    let btnContainer = scene.add.container(x, y);
+
+    let bg = scene.add.graphics()
+        .fillStyle(color, 0.25)
+        .fillRoundedRect(-width / 2, -height / 2, width, height, 10)
+        .lineStyle(2, color, 1)
+        .strokeRoundedRect(-width / 2, -height / 2, width, height, 10);
+
+    let label = scene.add.text(0, 0, text, {
+        fontSize: '15px',
+        fill: '#ffffff',
+        fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    // Samotný pod-kontajner spravíme interaktívnym po celej ploche tlačidla
+    btnContainer.setSize(width, height).setInteractive({ useHandCursor: true });
+
+    btnContainer.on('pointerover', () => bg.setAlpha(0.75));
+    btnContainer.on('pointerout', () => bg.setAlpha(1));
+    btnContainer.on('pointerdown', onClick);
+
+    btnContainer.add([bg, label]);
+    // Uložíme si odkaz na text, aby sa dal neskôr ľahko meniť (napr. Vypustiť / Zatvoriť)
+    btnContainer.label = label;
+
+    return btnContainer;
+}
+
