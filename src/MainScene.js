@@ -95,7 +95,7 @@ export default class MainScene extends Phaser.Scene {
 
         this.roomGroup.addMultiple([carpet, this.bed, roomWallsG]);
 
-        /* // 2. DVOR
+        // 2. DVOR
         let grass = this.add.graphics().fillStyle(0x4caf50, 1).fillRect(0, 0, this.gameWidth, this.gameHeight);
         grass.fillStyle(0x388e3c, 1).fillRect(150, 200, 30, 10).fillRect(420, 500, 35, 12);
         this.outsideGroup.add(grass);
@@ -122,7 +122,7 @@ export default class MainScene extends Phaser.Scene {
         });
 
         this.outsideGroup.setVisible(false);
-        this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = false); */
+        this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = false);
 
         let playerG = this.make.graphics({ x: 0, y: 0, add: false }).fillStyle(0x3498db, 1).fillRect(0, 0, 40, 40);
         playerG.generateTexture('playerTexture', 40, 40);
@@ -133,7 +133,7 @@ export default class MainScene extends Phaser.Scene {
         this.physics.add.collider(this.player, this.roomWalls);
         this.physics.add.collider(this.player, this.bottomWall);
         this.physics.add.collider(this.player, this.bed);
-        /* this.physics.add.collider(this.player, this.outsideObstacles); */
+        this.physics.add.collider(this.player, this.outsideObstacles);
 
         // 4. UI A INTERAKCIE
         this.statsUI = createStatsBubble(this, this.player);
@@ -206,8 +206,8 @@ export default class MainScene extends Phaser.Scene {
         this.roomWalls.getChildren().forEach(wall => wall.body.enable = !isOutside);
 
         // Vypnutie/zapnutie dvora
-        /* this.outsideGroup.setVisible(isOutside);
-        this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = isOutside); */
+        this.outsideGroup.setVisible(isOutside);
+        this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = isOutside);
 
         // Zastavenie prípadnej bežiacej animácie dverí
         this.tweens.killTweensOf(this.door);
