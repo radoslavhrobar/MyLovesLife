@@ -263,6 +263,45 @@ export default class MainScene extends Phaser.Scene {
         this.doghouseMenu.add([dogBg, this.dogActionBtn, feedBtn]);
     }
 
+    toggleTheo() {
+        this.isTheoOutside = !this.isTheoOutside;
+
+        if (this.isTheoOutside) {
+            // Vypustenie Thea pred búdu
+            this.theo.setPosition(this.doghouse.x + 110, this.doghouse.y);
+            this.theo.setVisible(true);
+            this.theo.body.enable = true;
+            showFloatingText(this, this.theo.x, this.theo.y - 40, 'Haf!🐕');
+
+            // Spustenie náhodného behania po dvore
+            if (!this.theoTimer) {
+                this.theoTimer = this.time.addEvent({
+                    delay: 1400, // zmena smeru každých 1,4 sekundy
+                    loop: true,
+                    callback: () => {
+                        if (!this.isTheoOutside || gameState.currentLocation !== 'outside' || gameState.isModalOpen) {
+                            this.theo.setVelocity(0);
+                            return;
+                        }
+                        // Občas sa na chvíľu zastaví (20 % šanca)
+                        if (Phaser.Math.Between(1, 5) === 1) {
+                            this.theo.setVelocity(0);
+                            return;
+                        }
+                        const dogSpeed = 200;
+                        const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+                        this.theo.setVelocity(Math.cos(angle) * dogSpeed, Math.sin(angle) * dogSpeed);
+                    }
+                });
+            }
+        } else {
+            // Zatvorenie Thea do búdy
+            this.theo.setVelocity(0);
+            this.theo.setVisible(false);
+            this.theo.body.enable = false;
+            showFloatingText(this, this.doghouse.x + 40, this.doghouse.y - 80, 'Už je pekne v búde🐕');
+        }
+    }
 
     switchLocation(target) {
         gameState.currentLocation = target;
@@ -276,6 +315,11 @@ export default class MainScene extends Phaser.Scene {
         // Vypnutie/zapnutie dvora
         this.outsideGroup.setVisible(isOutside);
         this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = isOutside);
+
+        const showTheo = isOutside && this.isTheoOutside;
+        this.theo.setVisible(showTheo);
+        this.theo.body.enable = showTheo;
+        if (!showTheo) this.theo.setVelocity(0);
 
         // Zastavenie prípadnej bežiacej animácie dverí
         this.tweens.killTweensOf(this.door);
@@ -325,6 +369,7 @@ export default class MainScene extends Phaser.Scene {
     update() {
         if (gameState.isModalOpen) {
             this.player.setVelocity(0);
+            this.theo.setVelocity(0);
             return;
         }
         const speed = 200;
@@ -335,6 +380,7 @@ export default class MainScene extends Phaser.Scene {
         else if (this.cursors.down.isDown || this.touchControls.down) this.player.setVelocityY(speed);
         if (this.bedMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bed.x, this.bed.y) > 170) this.bedMenu.setVisible(false);
         if (this.doorMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.door.x, this.door.y) > 140) this.doorMenu.setVisible(false);
+        if (this.doghouseMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) > 170) this.doghouseMenu.setVisible(false);
         this.statsUI.container.x = this.player.x;
         this.statsUI.container.y = this.player.y - this.statsUI.offsetY;
     }
