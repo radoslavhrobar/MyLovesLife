@@ -37,12 +37,12 @@ let panelWidth = 140;
 let panelHeight = 125;
 const panelPosition = panelHeight / 2 + 25;
 
-let playerStats = {
-    zamilovanost: 90,
-    energia: 50,
-    nalada: 70,
-    hlad: 40,
-    smad: 65
+let statsConfig = {
+    zamilovanost: { value: 90, icon: '❤️', color: 0xff4d6d },
+    energia: { value: 50, icon: '⚡', color: 0xf1c40f },
+    nalada: { value: 70, icon: '😊', color: 0x2ecc71 },
+    hlad: { value: 40, icon: '🍔', color: 0xe67e22 },
+    smad: { value: 65, icon: '💧', color: 0x3498db }
 };
 
 // Premenné pre interakciu s posteľou a okná (UI)
@@ -129,7 +129,6 @@ function create() {
     this.physics.add.collider(player, walls);
     this.physics.add.collider(player, bed);
 
-    // 4. VYTVORENIE BUBLINY S UKAZOVATEĽMI (ENERGIA, NÁLADA, HLAD, SMÄD)
     statsContainer = this.add.container(player.x, player.y - panelPosition);
     statsContainer.setVisible(false);
     statsContainer.setDepth(10);
@@ -141,41 +140,40 @@ function create() {
     panelBg.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 8);
     statsContainer.add(panelBg);
 
-    // Pomocná funkcia na vytvorenie jedného ukazovateľa (ikona + load bar)
-    const createStatBar = (yOffset, icon, value, barColor) => {
-        // Ikona naľavo
-        let iconText = this.add.text(-panelWidth / 2 + 10, yOffset, icon, { fontSize: '14px' }).setOrigin(0, 0.5);
+    const keys = Object.keys(statsConfig);
+    const spacing = panelHeight / (keys.length + 1);
+    let currentY = (-panelHeight / 2) + spacing;
 
-        // Sivé pozadie prázdneho baru (šírka 95px, výška 10px)
-        let barWidth = 95;
-        let barHeight = 10;
+    const barWidth = 95;
+    const barHeight = 10;
+
+    keys.forEach(key => {
+        let stat = statsConfig[key];
+
+        // Ikona naľavo
+        let iconText = this.add.text(-panelWidth / 2 + 10, currentY, stat.icon, { fontSize: '14px' }).setOrigin(0, 0.5);
+
+        // Sivé pozadie prázdneho baru
         let barBg = this.add.graphics();
         barBg.fillStyle(0x333333, 1);
-        barBg.fillRoundedRect(-35, yOffset - barHeight / 2, barWidth, barHeight, 4);
+        barBg.fillRoundedRect(-35, currentY - barHeight / 2, barWidth, barHeight, 4);
 
-        // Farebná výplň podľa aktuálnej hodnoty (0 až 100)
-        let fillWidth = (value / 100) * barWidth;
+        // Farebná výplň
+        let fillWidth = (stat.value / 100) * barWidth;
         let barFill = this.add.graphics();
-        barFill.fillStyle(barColor, 1);
-        barFill.fillRoundedRect(-35, yOffset - barHeight / 2, fillWidth, barHeight, 4);
+        barFill.fillStyle(stat.color, 1);
+        barFill.fillRoundedRect(-35, currentY - barHeight / 2, fillWidth, barHeight, 4);
 
-        // Vloženie do hlavného kontajnera
+        // Uložíme si grafiku a pozíciu priamo do tohto objektu pre budúce aktualizácie
+        stat.graphics = barFill;
+        stat.y = currentY;
+        stat.width = barWidth;
+        stat.height = barHeight;
+
         statsContainer.add([iconText, barBg, barFill]);
-    };
+        currentY += spacing;
+    });
 
-    const statsCount = Object.keys(playerStats).length;
-    const spacing = panelHeight / (statsCount + 1);
-    let currentY = (-panelHeight / 2) + spacing;
-    createStatBar(currentY, '❤️', playerStats.zamilovanost, 0xff4d6d);
-    currentY += spacing;
-    createStatBar(currentY, '⚡', playerStats.energia, 0xf1c40f);
-    currentY += spacing;
-    createStatBar(currentY, '😊', playerStats.nalada, 0x2ecc71);
-    currentY += spacing;
-    createStatBar(currentY, '🍔', playerStats.hlad, 0xe67e22);
-    currentY += spacing;
-    createStatBar(currentY, '💧', playerStats.smad, 0x3498db);
-    currentY += spacing;
 
     player.on('pointerdown', () => {
         if (isModalOpen) return;
@@ -410,7 +408,7 @@ function startActivityTimer(scene, option, type) {
     // 3. ROZLÍŠENIE SPÁNKU A FILMU
     if (type === 'sleep') {
         // SPÁNOK: Ikona spáča + animované "Zzz..."
-        let sleepIcon = scene.add.text(-25, -22, `${option.icon}  `, { fontSize: '20px' }).setOrigin(0.5);
+        let sleepIcon = scene.add.text(-25, -22, `${option.icon} `, { fontSize: '20px' }).setOrigin(0.5);
         let zzzText = scene.add.text(12, -20, '💤😴', {
             fontSize: '15px',
             fill: '#74b9ff',
@@ -474,15 +472,30 @@ function startActivityTimer(scene, option, type) {
         },
         onComplete: () => {
             // Doplnenie štatistiky postavy
-            playerStats[option.stat] = Math.min(100, playerStats[option.stat] + option.boost);
+            statsConfig[option.stat].value += option.boost;
+            updateStatsBars();
 
             // Zničenie bubliny a odomknutie pohybu
             timerContainer.destroy();
             isModalOpen = false;
 
-            showFloatingText(scene, player.x, player.y - 40, `+${option.boost} ${option.icon}`);
+            showFloatingText(scene, player.x, player.y - 40, `+${option.boost}${option.icon}`);
         }
     });
+}
+
+function updateStatsBars() {
+    for (let key in statsConfig) {
+        let stat = statsConfig[key];
+
+        // Poistka pre rozsah 0 až 100
+        stat.value = Phaser.Math.Clamp(stat.value, 0, 100);
+        let fillWidth = (stat.value / 100) * stat.width;
+
+        stat.graphics.clear();
+        stat.graphics.fillStyle(stat.color, 1);
+        stat.graphics.fillRoundedRect(-35, stat.y - stat.height / 2, fillWidth, stat.height, 4);
+    }
 }
 
 
