@@ -3,7 +3,7 @@ import { gameState, statsConfig, bedOptions, showFloatingText } from './state.js
 export function createTouchControls(scene, gameWidth, gameHeight, controlsState) {
     const step = 65;
     const startX = gameWidth - (step * 2.5);
-    const startY = gameHeight - (step * 2.3);
+    const startY = gameHeight - (step * 3.0);
 
     const createBtn = (x, y, symbol, key) => {
         let btn = scene.add.image(x, y, 'buttonBg').setInteractive().setDepth(20);
@@ -78,11 +78,9 @@ export function updateStatsBars() {
     }
 }
 
-export function openBedModal(scene, bed, player, type) {
+export function openBedModal(scene, gameWidth, gameHeight, bed, player, type) {
     gameState.isModalOpen = true;
-    modalContainer = scene.add.container(gameWidth / 2, gameHeight / 2).setDepth(50).setVisible(false);
-    modalContainer.removeAll(true);
-    modalContainer.setVisible(true);
+    let modalContainer = scene.add.container(gameWidth / 2, gameHeight / 2).setDepth(50).setVisible(false);
 
     const options = bedOptions[type];
     const count = options.length;
