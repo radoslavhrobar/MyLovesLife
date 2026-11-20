@@ -135,11 +135,13 @@ export default class MainScene extends Phaser.Scene {
 
         this.theo = this.physics.add.sprite(this.doghouse.x + 85, this.doghouse.y, 'theoTexture')
             .setDepth(8)
-            .setCollideWorldBounds(true);
+            .setCollideWorldBounds(true)
+            .setInteractive({ useHandCursor: true });
 
         this.theo.setVisible(false);
         this.theo.body.enable = false;
         this.isTheoOutside = false;
+        this.isPettingTheo = false;
 
         this.physics.add.collider(this.theo, this.door);
         this.physics.add.collider(this.theo, this.bottomWall);
@@ -194,6 +196,23 @@ export default class MainScene extends Phaser.Scene {
                 this.bedMenu.setVisible(false);
             } else {
                 showFloatingText(this, this.doghouse.x + 40, this.doghouse.y - 80, 'Príď bližšie k búde!');
+            }
+        });
+
+        this.theo.on('pointerdown', () => {
+            if (gameState.isModalOpen || gameState.currentLocation !== 'outside' || !this.isTheoOutside) return;
+
+            // Ak už Thea hladkáš, ďalší klik ho znova pustí behať
+            if (this.isPettingTheo) {
+                this.stopPettingTheo();
+                return;
+            }
+
+            // Kontrola priameho dotyku (stred hráča vs stred psa <= 58 px)
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) <= 58) {
+                this.startPettingTheo();
+            } else {
+                showFloatingText(this, this.theo.x, this.theo.y - 35, 'Poď bližšie k Thejkovi! 🐕');
             }
         });
 
@@ -279,7 +298,7 @@ export default class MainScene extends Phaser.Scene {
                     delay: 1400, // zmena smeru každých 1,4 sekundy
                     loop: true,
                     callback: () => {
-                        if (!this.isTheoOutside || gameState.currentLocation !== 'outside' || gameState.isModalOpen) {
+                        if (!this.isTheoOutside || gameState.currentLocation !== 'outside' || gameState.isModalOpen || this.isPettingTheo) {
                             this.theo.setVelocity(0);
                             return;
                         }
@@ -288,20 +307,87 @@ export default class MainScene extends Phaser.Scene {
                             this.theo.setVelocity(0);
                             return;
                         }
-                        const dogSpeed = 200;
-                        const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
-                        this.theo.setVelocity(Math.cos(angle) * dogSpeed, Math.sin(angle) * dogSpeed);
+                        this.setTheoSettings();
                     }
                 });
             }
         } else {
             // Zatvorenie Thea do búdy
+            this.stopPettingTheo();
             this.theo.setVelocity(0);
             this.theo.setVisible(false);
             this.theo.body.enable = false;
             showFloatingText(this, this.doghouse.x + 40, this.doghouse.y - 80, 'Už je pekne v búde🐕');
         }
     }
+
+    startPettingTheo() {
+        this.isPettingTheo = true;
+        this.theo.setVelocity(0);
+        this.theo.body.immovable = true; // Aby hráč psa pri dotyku neodtláčal
+
+        // Plávajúca ikona ruky nad Theom
+        this.petHandIcon = this.add.text(this.theo.x, this.theo.y - 35, '✋', {
+            fontSize: '26px'
+        }).setOrigin(0.5).setDepth(20);
+
+        // Animácia hladkania rukou (hore-dole a mierne nakláňanie)
+        this.petHandTween = this.tweens.add({
+            targets: this.petHandIcon,
+            y: this.theo.y - 25,
+            angle: { from: -15, to: 15 },
+            duration: 350,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Časovač, ktorý každých 500 ms vypustí stúpajúce srdiečko
+        this.petHeartsTimer = this.time.addEvent({
+            delay: 500,
+            loop: true,
+            callback: () => {
+                let heart = this.add.text(
+                    this.theo.x + Phaser.Math.Between(-18, 18),
+                    this.theo.y - 25,
+                    Phaser.Math.RND.pick(['❤️', '💖', '💕']),
+                    { fontSize: '18px' }
+                ).setOrigin(0.5).setDepth(21);
+
+                this.tweens.add({
+                    targets: heart,
+                    y: heart.y - 45,
+                    alpha: 0,
+                    scale: 1.3,
+                    duration: 900,
+                    ease: 'Power1',
+                    onComplete: () => heart.destroy()
+                });
+            }
+        });
+    }
+
+    stopPettingTheo() {
+        if (!this.isPettingTheo) return;
+        this.isPettingTheo = false;
+        this.theo.body.immovable = false;
+
+        // Zničenie animácie ruky a časovača srdiečok
+        if (this.petHandTween) this.petHandTween.stop();
+        if (this.petHandIcon) this.petHandIcon.destroy();
+        if (this.petHeartsTimer) this.petHeartsTimer.remove();
+
+        // Okamžite psa znova rozbehne
+        this.setTheoSettings();
+        showFloatingText(this, this.theo.x, this.theo.y - 35, 'Haf!🐾');
+    }
+
+    setTheoSettings() {
+        const dogSpeed = 200;
+        const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        this.theo.setVelocity(Math.cos(angle) * dogSpeed, Math.sin(angle) * dogSpeed);
+    }
+
 
     switchLocation(target) {
         gameState.currentLocation = target;
@@ -320,6 +406,7 @@ export default class MainScene extends Phaser.Scene {
         this.theo.setVisible(showTheo);
         this.theo.body.enable = showTheo;
         if (!showTheo) this.theo.setVelocity(0);
+        this.stopPettingTheo();
 
         // Zastavenie prípadnej bežiacej animácie dverí
         this.tweens.killTweensOf(this.door);
@@ -381,6 +468,7 @@ export default class MainScene extends Phaser.Scene {
         if (this.bedMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bed.x, this.bed.y) > 170) this.bedMenu.setVisible(false);
         if (this.doorMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.door.x, this.door.y) > 140) this.doorMenu.setVisible(false);
         if (this.doghouseMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) > 170) this.doghouseMenu.setVisible(false);
+        if (this.isPettingTheo && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) > 75) this.stopPettingTheo();
         this.statsUI.container.x = this.player.x;
         this.statsUI.container.y = this.player.y - this.statsUI.offsetY;
     }
