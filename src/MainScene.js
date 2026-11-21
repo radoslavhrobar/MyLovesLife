@@ -32,6 +32,7 @@ export default class MainScene extends Phaser.Scene {
 
         this.load.image('visitBg', 'src/assets/frontHouse.png');
         this.load.image('car', 'src/assets/car.PNG');
+        this.load.image('phone', 'src/assets/car.PNG');
     }
 
     create() {
@@ -716,5 +717,7 @@ export default class MainScene extends Phaser.Scene {
         }
         this.statsUI.container.x = this.player.x;
         this.statsUI.container.y = this.player.y - this.statsUI.offsetY;
+        this.statsUI.handPhoneSprite.setPosition(this.player.x + 32, this.player.y + 18);
+        //this.statsUI.phoneMenu.setPosition(this.statsUI.handPhoneSprite.x, this.statsUI.handPhoneSprite.y - 65);
     }
 }

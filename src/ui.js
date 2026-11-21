@@ -55,6 +55,17 @@ export function createStatsBubble(scene, player) {
     phoneBtn.on('pointerout', () => phoneBg.setAlpha(1));
     container.add(phoneBtn);
 
+    let handPhoneSprite = scene.add.image(player.x + 32, player.y + 18, 'phone')
+        .setDisplaySize(50, 65) // Uprav si veľkosť podľa pomeru tvojej fotky
+        .setDepth(30)
+        .setVisible(false)
+        .setInteractive({ useHandCursor: true });
+        
+    phoneBtn.on('pointerdown', () => {
+        handPhoneSprite.setVisible(!handPhoneSprite.visible);
+        container.setVisible(false);
+    });
+
     const keys = Object.keys(statsConfig);
     const spacing = panelHeight / (keys.length + 1);
     let currentY = (-panelHeight / 2) + spacing;
@@ -86,7 +97,7 @@ export function createStatsBubble(scene, player) {
         currentY += spacing;
     });
 
-    return { container, offsetY: panelPosition };
+    return { container, offsetY: panelPosition, handPhoneSprite};
 }
 
 export function updateStatsBars() {
@@ -97,7 +108,7 @@ export function updateStatsBars() {
 
         stat.graphics.clear();
         stat.graphics.fillStyle(stat.color, 1);
-        stat.graphics.fillRoundedRect(-35, stat.y - stat.height / 2, fillWidth, stat.height, 4);
+        stat.graphics.fillRoundedRect(stat.x, stat.y - stat.height / 2, fillWidth, stat.height, 4);
     }
 }
 
