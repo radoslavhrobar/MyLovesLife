@@ -29,6 +29,9 @@ export default class MainScene extends Phaser.Scene {
         createPhoto('sleep2', 0x1a252f);
         createPhoto('movie1', 0x8e44ad);
         createPhoto('movie2', 0xc0392b);
+
+        this.load.image('visitBg', 'src/assets/frontHouse.png');
+        this.load.image('car', 'src/assets/car.PNG');
     }
 
     create() {
@@ -37,6 +40,51 @@ export default class MainScene extends Phaser.Scene {
         this.roomGroup = this.add.group();
         this.outsideGroup = this.add.group();
         this.outsideObstacles = this.physics.add.staticGroup();
+        this.visitGroup = this.add.group();
+
+        // 1. Hlavná fotka roztiahnutá na celú scénu
+        let visitBg = this.add.image(this.gameWidth / 2, this.gameHeight / 2, 'visitBg')
+            .setDisplaySize(this.gameWidth, this.gameHeight)
+            .setDepth(30);
+
+        // 2. Druhá fotka umiestnená na nejakom mieste vpravo
+        let rightPhoto = this.add.image(this.gameWidth - 300, this.gameHeight - 200, 'car')
+            .setDisplaySize(600, 400) // uprav si rozmery podľa potreby
+            .setDepth(31);
+
+        // 3. Lomená šípka vychádzajúca zľava hore (napr. z [40, 40] -> zlom [40, 140] -> do rámčeka)
+        let arrowG = this.add.graphics().setDepth(32);
+        arrowG.lineStyle(4, 0xff00fb, 0.95);
+        arrowG.beginPath();
+        arrowG.moveTo(40, 100);   // začiatok vľavo hore
+        arrowG.lineTo(40, 140);  // zvislá časť nadol
+        arrowG.lineTo(130, 140); // vodorovná časť doprava k rámčeku
+        arrowG.strokePath();
+
+        // Hrot šípky na konci čiary pri rámčeku [130, 140]
+        arrowG.fillStyle(0xff00fb, 0.95);
+        arrowG.fillTriangle(138, 140, 124, 132, 124, 148);
+
+        // 4. Rámček vedľa hrotu šípky s tlačidlom "môžeš ísť do nás!"
+        let boxX = 250;
+        let boxY = 140;
+        let boxW = 220;
+        let boxH = 70;
+
+        let inviteBox = this.add.graphics().setDepth(32);
+        inviteBox.fillStyle(0x1e272e, 0.92)
+            .fillRoundedRect(boxX - boxW / 2, boxY - boxH / 2, boxW, boxH, 12)
+            .lineStyle(2, 0xff72c4, 0.7)
+            .strokeRoundedRect(boxX - boxW / 2, boxY - boxH / 2, boxW, boxH, 12);
+
+        // Tvoje tlačidlo cez createRoundedButton vnútri rámčeka
+        let enterBtn = createRoundedButton(this, boxX, boxY, 195, 42, 'Môžeš ísť do nás!💖', 0xff72c4, () => {
+            this.switchLocation('room'); // Alebo iná cieľová lokácia po kliknutí
+        }).setDepth(33);
+
+        // Pridanie všetkých prvkov do skupiny a skrytie na štarte
+        this.visitGroup.addMultiple([visitBg, rightPhoto, arrowG, inviteBox, enterBtn]);
+        this.visitGroup.setVisible(true);
 
         // 1. IZBA
         this.cameras.main.setBackgroundColor('#a16c4b');
@@ -94,6 +142,7 @@ export default class MainScene extends Phaser.Scene {
         this.door.refreshBody();
 
         this.roomGroup.addMultiple([carpet, this.bed, roomWallsG]);
+        this.roomGroup.setVisible(false);
 
         // 2. DVOR
         let grass = this.add.graphics().fillStyle(0x4caf50, 1).fillRect(0, 0, this.gameWidth, this.gameHeight);
@@ -539,27 +588,39 @@ export default class MainScene extends Phaser.Scene {
     }
 
     switchLocation(target) {
-        this.theoFetchState = 'none';
         gameState.currentLocation = target;
+        const isVisit = target === 'visit';
         const isOutside = target === 'outside';
+        const isRoom = target === 'room';
 
-        // Vypnutie/zapnutie stien a nábytku v izbe
-        this.roomGroup.setVisible(!isOutside);
-        this.bed.body.enable = !isOutside;
-        this.roomWalls.getChildren().forEach(wall => wall.body.enable = !isOutside);
-
-        // Vypnutie/zapnutie dvora
-        this.outsideGroup.setVisible(isOutside);
-        this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = isOutside);
-
+        // 1. Reset prebiehajúcich akcií a UI
+        this.theoFetchState = 'none';
         this.isAimingBall = false;
         this.aimGraphics.clear();
+        this.stopPettingTheo();
+        if (isVisit) this.statsUI.container.setVisible(false);
+
+        // 2. Viditeľnosť jednotlivých lokácií
+        this.visitGroup.setVisible(isVisit);
+        this.roomGroup.setVisible(isRoom);
+        this.outsideGroup.setVisible(isOutside);
+
+        // 3. Fyzika a viditeľnosť postáv a stien
+        this.player.setVisible(!isVisit);
+        this.door.setVisible(!isVisit);
+        this.door.body.enable = !isVisit;
+        this.bottomWall.body.enable = !isVisit;
+
+        this.bed.body.enable = isRoom;
+        this.roomWalls.getChildren().forEach(wall => wall.body.enable = isRoom);
+        this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = isOutside);
 
         const showTheo = isOutside && this.isTheoOutside;
         this.theo.setVisible(showTheo);
         this.theo.body.enable = showTheo;
         if (!showTheo) this.theo.setVelocity(0);
-        this.stopPettingTheo();
+
+        if (isVisit) return;
 
         // Zastavenie prípadnej bežiacej animácie dverí
         this.tweens.killTweensOf(this.door);

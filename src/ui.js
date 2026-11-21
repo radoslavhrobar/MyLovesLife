@@ -21,7 +21,7 @@ export function createTouchControls(scene, gameWidth, gameHeight, controlsState)
 }
 
 export function createStatsBubble(scene, player) {
-    const panelWidth = 140;
+    const panelWidth = 180;
     const panelHeight = 125;
     const panelPosition = panelHeight / 2 + 25;
 
@@ -35,27 +35,50 @@ export function createStatsBubble(scene, player) {
     panelBg.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 8);
     container.add(panelBg);
 
+    const phoneXOffset = 22;
+    const phoneX = -panelWidth / 2 + phoneXOffset; // Kúsok od ľavého okraja
+    const phoneY = 0; // Vertikálne presne v strede
+    const phoneSize = 34;
+
+    let phoneBtn = scene.add.container(phoneX, phoneY);
+    let phoneBg = scene.add.graphics()
+        .fillStyle(0x111111, 0.85)
+        .fillRoundedRect(-phoneSize / 2, -phoneSize / 2, phoneSize, phoneSize, 8)
+        .lineStyle(2, 0x000000, 1) // Čierny rámček
+        .strokeRoundedRect(-phoneSize / 2, -phoneSize / 2, phoneSize, phoneSize, 8);
+
+    let phoneIcon = scene.add.text(0, 0, '📱', { fontSize: '25px' }).setOrigin(0.5);
+    phoneBtn.add([phoneBg, phoneIcon]);
+    phoneBtn.setSize(phoneSize, phoneSize).setInteractive({ useHandCursor: true });
+
+    phoneBtn.on('pointerover', () => phoneBg.setAlpha(0.75));
+    phoneBtn.on('pointerout', () => phoneBg.setAlpha(1));
+    container.add(phoneBtn);
+
     const keys = Object.keys(statsConfig);
     const spacing = panelHeight / (keys.length + 1);
     let currentY = (-panelHeight / 2) + spacing;
     const barWidth = 95;
     const barHeight = 10;
+    const iconX = -panelWidth / 2 + phoneXOffset + phoneSize / 2 + 5; // Hneď za ikonkou mobilu
+    const barX = iconX + 24;
 
     keys.forEach(key => {
         let stat = statsConfig[key];
-        let iconText = scene.add.text(-panelWidth / 2 + 10, currentY, stat.icon, { fontSize: '14px' }).setOrigin(0, 0.5);
+        let iconText = scene.add.text(iconX, currentY, stat.icon, { fontSize: '14px' }).setOrigin(0, 0.5);
 
         let barBg = scene.add.graphics();
         barBg.fillStyle(0x333333, 1);
-        barBg.fillRoundedRect(-35, currentY - barHeight / 2, barWidth, barHeight, 4);
+        barBg.fillRoundedRect(barX, currentY - barHeight / 2, barWidth, barHeight, 4);
 
         let fillWidth = (stat.value / 100) * barWidth;
         let barFill = scene.add.graphics();
         barFill.fillStyle(stat.color, 1);
-        barFill.fillRoundedRect(-35, currentY - barHeight / 2, fillWidth, barHeight, 4);
+        barFill.fillRoundedRect(barX, currentY - barHeight / 2, fillWidth, barHeight, 4);
 
         stat.graphics = barFill;
         stat.y = currentY;
+        stat.x = barX;
         stat.width = barWidth;
         stat.height = barHeight;
 
