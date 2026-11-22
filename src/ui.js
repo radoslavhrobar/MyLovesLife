@@ -60,10 +60,40 @@ export function createStatsBubble(scene, player) {
         .setDepth(30)
         .setVisible(false)
         .setInteractive({ useHandCursor: true });
-        
+
     phoneBtn.on('pointerdown', () => {
         handPhoneSprite.setVisible(!handPhoneSprite.visible);
         container.setVisible(false);
+    });
+
+    // --- MENU NAD MOBILOM V RUKE (samostatný kontajner, nie vnútri štatistík!) ---
+    const menuW = 260;
+    const menuH = 60;
+    let phoneMenu = scene.add.container(handPhoneSprite.x + 50, handPhoneSprite.y - 65)
+        .setDepth(25)
+        .setVisible(false);
+
+    let menuBg = scene.add.graphics()
+        .fillStyle(0x1e272e, 0.92)
+        .fillRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 12)
+        .lineStyle(2, 0xff72c4, 0.6)
+        .strokeRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 12);
+
+    let callBtn = createRoundedButton(scene, 0, 0, menuW - 20, 38, 'Zavolať hovienko moje💩❤️', 0xff72c4, () => {
+        phoneMenu.setVisible(false);
+        handPhoneSprite.setVisible(false);
+        container.setVisible(false);
+
+        if (scene.startCallTimer) {
+            scene.startCallTimer();
+        }
+    });
+
+
+    phoneMenu.add([menuBg, callBtn]);
+
+    handPhoneSprite.on('pointerdown', () => {
+        phoneMenu.setVisible(!phoneMenu.visible);
     });
 
     const keys = Object.keys(statsConfig);
@@ -97,7 +127,7 @@ export function createStatsBubble(scene, player) {
         currentY += spacing;
     });
 
-    return { container, offsetY: panelPosition, handPhoneSprite};
+    return { container, offsetY: panelPosition, handPhoneSprite, phoneMenu};
 }
 
 export function updateStatsBars() {

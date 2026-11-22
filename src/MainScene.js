@@ -85,7 +85,7 @@ export default class MainScene extends Phaser.Scene {
 
         // Pridanie všetkých prvkov do skupiny a skrytie na štarte
         this.visitGroup.addMultiple([visitBg, rightPhoto, arrowG, inviteBox, enterBtn]);
-        this.visitGroup.setVisible(true);
+        this.visitGroup.setVisible(false);
 
         // 1. IZBA
         this.cameras.main.setBackgroundColor('#a16c4b');
@@ -143,7 +143,6 @@ export default class MainScene extends Phaser.Scene {
         this.door.refreshBody();
 
         this.roomGroup.addMultiple([carpet, this.bed, roomWallsG]);
-        this.roomGroup.setVisible(false);
 
         // 2. DVOR
         let grass = this.add.graphics().fillStyle(0x4caf50, 1).fillRect(0, 0, this.gameWidth, this.gameHeight);
@@ -387,6 +386,72 @@ export default class MainScene extends Phaser.Scene {
         });
 
         this.doghouseMenu.add([dogBg, this.dogActionBtn, feedBtn]);
+    }
+
+    startCallTimer() {
+        gameState.isModalOpen = true;
+
+        const w = 230;
+        const h = 115;
+        let callContainer = this.add.container(this.gameWidth / 2, this.gameHeight / 2).setDepth(50);
+
+        // Tmavé pozadie s ružovým orámovaním
+        let bg = this.add.graphics()
+            .fillStyle(0x1e272e, 0.95)
+            .fillRoundedRect(-w / 2, -h / 2, w, h, 14)
+            .lineStyle(2, 0xff72c4, 0.9)
+            .strokeRoundedRect(-w / 2, -h / 2, w, h, 14);
+        callContainer.add(bg);
+
+        // Animovaná ikona telefonátu
+        let callIcon = this.add.text(0, -28, '📞💩❤️', { fontSize: '24px' }).setOrigin(0.5);
+        callContainer.add(callIcon);
+
+        this.tweens.add({
+            targets: callIcon,
+            scale: 1.18,
+            angle: { from: -8, to: 8 },
+            duration: 300,
+            yoyo: true,
+            repeat: -1
+        });
+
+        // Text odpočítavania
+        let timeText = this.add.text(0, 4, '5.0 s', {
+            fontSize: '14px',
+            fill: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        // Lišta priebehu (progress bar)
+        const barWidth = w - 50;
+        let barBg = this.add.graphics()
+            .fillStyle(0x333333, 1)
+            .fillRoundedRect(-barWidth / 2, 24, barWidth, 12, 6);
+
+        let barFill = this.add.graphics();
+        callContainer.add([timeText, barBg, barFill]);
+
+        // 5-sekundový časovač
+        this.tweens.addCounter({
+            from: 0,
+            to: 100,
+            duration: 5000,
+            onUpdate: (tween) => {
+                const progress = tween.getValue();
+                const remaining = ((100 - progress) / 100 * 5).toFixed(1);
+                timeText.setText(`${remaining} s`);
+
+                barFill.clear();
+                barFill.fillStyle(0xff72c4, 1);
+                barFill.fillRoundedRect(-barWidth / 2, 24, (progress / 100) * barWidth, 12, 6);
+            },
+            onComplete: () => {
+                callContainer.destroy();
+                gameState.isModalOpen = false;
+                this.switchLocation('visit');
+            }
+        });
     }
 
     toggleTheo() {
@@ -718,6 +783,6 @@ export default class MainScene extends Phaser.Scene {
         this.statsUI.container.x = this.player.x;
         this.statsUI.container.y = this.player.y - this.statsUI.offsetY;
         this.statsUI.handPhoneSprite.setPosition(this.player.x + 32, this.player.y + 18);
-        //this.statsUI.phoneMenu.setPosition(this.statsUI.handPhoneSprite.x, this.statsUI.handPhoneSprite.y - 65);
+        this.statsUI.phoneMenu.setPosition(this.statsUI.handPhoneSprite.x + 50, this.statsUI.handPhoneSprite.y - 65);
     }
 }
