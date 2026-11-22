@@ -33,6 +33,7 @@ export default class MainScene extends Phaser.Scene {
         this.load.image('visitBg', 'src/assets/frontHouse.png');
         this.load.image('car', 'src/assets/car.PNG');
         this.load.image('phone', 'src/assets/car.PNG');
+        this.load.image('racket', 'src/assets/car.PNG');
     }
 
     create() {
@@ -66,10 +67,10 @@ export default class MainScene extends Phaser.Scene {
         arrowG.fillStyle(0xff00fb, 0.95);
         arrowG.fillTriangle(138, 140, 124, 132, 124, 148);
 
-        // 4. Rámček vedľa hrotu šípky s tlačidlom "môžeš ísť do nás!"
+        // 4. Rámček vedľa hrotu šípky s tlačidlom "Poďme hrať bedminton!"
         let boxX = 250;
         let boxY = 140;
-        let boxW = 220;
+        let boxW = 230;
         let boxH = 70;
 
         let inviteBox = this.add.graphics().setDepth(32);
@@ -79,8 +80,8 @@ export default class MainScene extends Phaser.Scene {
             .strokeRoundedRect(boxX - boxW / 2, boxY - boxH / 2, boxW, boxH, 12);
 
         // Tvoje tlačidlo cez createRoundedButton vnútri rámčeka
-        let enterBtn = createRoundedButton(this, boxX, boxY, 195, 42, 'Môžeš ísť do nás!💖', 0xff72c4, () => {
-            this.switchLocation('room'); // Alebo iná cieľová lokácia po kliknutí
+        let enterBtn = createRoundedButton(this, boxX, boxY, 210, 42, 'Poďme hrať bedminton!💖', 0xff72c4, () => {
+            this.startBadmintonSetup();
         }).setDepth(33);
 
         // Pridanie všetkých prvkov do skupiny a skrytie na štarte
@@ -193,8 +194,11 @@ export default class MainScene extends Phaser.Scene {
         this.outsideGroup.setVisible(false);
         this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = false);
 
-        let playerG = this.make.graphics({ x: 0, y: 0, add: false }).fillStyle(0x3498db, 1).fillRect(0, 0, 40, 40);
-        playerG.generateTexture('playerTexture', 40, 40);
+        this.playerWidth = 40;
+        this.playerHeight = 40;
+
+        let playerG = this.make.graphics({ x: 0, y: 0, add: false }).fillStyle(0x3498db, 1).fillRect(0, 0, this.playerWidth, this.playerHeight);
+        playerG.generateTexture('playerTexture', this.playerWidth, this.playerHeight);
 
         this.player = this.physics.add.sprite(this.gameWidth / 2, this.gameHeight / 2, 'playerTexture').setInteractive().setDepth(8).setCollideWorldBounds(true);
 
@@ -212,6 +216,60 @@ export default class MainScene extends Phaser.Scene {
         this.isPettingTheo = false;
         this.theoFetchState = 'none';
 
+        // --- BEDMINTON (MINIHRA) ---
+        this.isBadmintonMode = false;
+        this.isBadmintonPlaying = false;
+        this.badmintonGroup = this.add.group();
+
+        // Druhý hráč (bot - fialovo-ružový štvorec)
+        let botG = this.make.graphics({ x: 0, y: 0, add: false }).fillStyle(0xe84393, 1).fillRect(0, 0, 40, 40);
+        botG.generateTexture('botTexture', 40, 40);
+
+        this.bot = this.physics.add.sprite(this.gameWidth / 2, 100, 'botTexture')
+            .setDepth(8)
+            .setCollideWorldBounds(true);
+
+        // Raketa hráča a raketa bota (fotky s fyzikou pre presné hitboxy)
+        this.playerRacket = this.physics.add.sprite(this.player.x, this.player.y - 28, 'racket')
+            .setDisplaySize(32, 56)
+            .setDepth(9);
+        this.playerRacket.body.setAllowGravity(false);
+
+        this.botRacket = this.physics.add.sprite(this.bot.x, this.bot.y + 28, 'racket')
+            .setDisplaySize(32, 56)
+            .setFlipY(true)
+            .setDepth(9);
+        this.botRacket.body.setAllowGravity(false);
+
+        let netLine = this.add.graphics().setDepth(4);
+        netLine.lineStyle(3, 0xffffff, 0.45);
+        netLine.beginPath();
+        netLine.moveTo(0, this.gameHeight / 2);
+        netLine.lineTo(this.gameWidth, this.gameHeight / 2);
+        netLine.strokePath();
+
+        // Ikona košíka (fyzikálny objekt s točením)
+        this.shuttlecock = this.add.text(this.gameWidth / 2, this.gameHeight / 2, '🏸', { fontSize: '28px' })
+            .setOrigin(0.5)
+            .setDepth(12);
+        this.physics.add.existing(this.shuttlecock);
+        this.shuttlecock.body.setCircle(12, 4, 4);
+
+        // Tlačidlo HRAŤ uprostred obrazovky
+        this.playBadmintonBtn = createRoundedButton(this, this.gameWidth / 2, this.gameHeight / 2, 160, 50, 'HRAŤ', 0xff72c4, () => {
+            this.startBadmintonRound();
+        }).setDepth(35);
+
+        this.badmintonGroup.addMultiple([netLine, this.bot, this.playerRacket, this.botRacket, this.shuttlecock, this.playBadmintonBtn]);
+        this.badmintonGroup.setVisible(false);
+        this.bot.body.enable = false;
+        this.playerRacket.body.enable = false;
+        this.botRacket.body.enable = false;
+        this.shuttlecock.body.enable = false;
+
+        // Prekrytie (overlap) rakiet s košíkom
+        this.physics.add.overlap(this.playerRacket, this.shuttlecock, () => this.hitShuttlecock(this.playerRacket, true));
+        this.physics.add.overlap(this.botRacket, this.shuttlecock, () => this.hitShuttlecock(this.botRacket, false));
         this.physics.add.collider(this.theo, this.door);
         this.physics.add.collider(this.theo, this.bottomWall);
         this.physics.add.collider(this.theo, this.outsideObstacles);
@@ -436,10 +494,10 @@ export default class MainScene extends Phaser.Scene {
         this.tweens.addCounter({
             from: 0,
             to: 100,
-            duration: 5000,
+            duration: 200,
             onUpdate: (tween) => {
                 const progress = tween.getValue();
-                const remaining = ((100 - progress) / 100 * 5).toFixed(1);
+                const remaining = ((100 - progress) / 100 * 2).toFixed(1);
                 timeText.setText(`${remaining} s`);
 
                 barFill.clear();
@@ -725,6 +783,7 @@ export default class MainScene extends Phaser.Scene {
             ease: 'Power2'
         });
 
+        if (!this.isBadmintonMode)
         showFloatingText(
             this,
             isOutside ? this.player.x - 150 : this.player.x + 55,
@@ -780,9 +839,182 @@ export default class MainScene extends Phaser.Scene {
                 }
             }
         }
+        // --- LOGIKA BEDMINTONU (HRÁČ DOLE, BOT HORE) ---
+        if (this.isBadmintonMode) {
+            const minPlayerY = (this.gameHeight / 2) + this.playerHeight / 2;
+            if (this.player.y < minPlayerY) {
+                this.player.y = minPlayerY;
+            }
+            
+            // 1. Raketa hráča: nad/pod hráčom podľa polovice mapy + zrkadlové otočenie na ľavej polke
+            const playerOnLeft = this.player.x < this.gameWidth / 2;
+            this.playerRacket.setFlipX(playerOnLeft); // Zrkadlové otočenie pri prechode na ľavú polku
+            this.playerRacket.setPosition(
+                this.player.x,
+                this.player.y - 28
+            );
+
+            // 2. Raketa bota (hore)
+            const botOnLeft = this.bot.x < this.gameWidth / 2;
+            this.botRacket.setFlipX(botOnLeft);
+            this.botRacket.setPosition(
+                this.bot.x,
+                this.bot.y + 28
+            );
+
+            if (this.isBadmintonPlaying) {
+                // 3. Točivá animácia košíka
+                this.shuttlecock.angle += 10;
+
+                // Uložíme aktuálnu pozíciu košíka do poľa (max. 10 posledných snímok = krátky chvostík)
+                this.shuttleTrailPoints.push({ x: this.shuttlecock.x, y: this.shuttlecock.y });
+                if (this.shuttleTrailPoints.length > 10) {
+                    this.shuttleTrailPoints.shift(); // Odstráni najstarší bod
+                }
+
+                // Vykreslíme postupne miznúce biele krúžky za košíkom
+                this.shuttleTrailGraphics.clear();
+                this.shuttleTrailPoints.forEach((pt, index) => {
+                    const ratio = (index + 1) / this.shuttleTrailPoints.length; // od 0.1 (chvost) po 1.0 (pri košíku)
+                    this.shuttleTrailGraphics.fillStyle(0xffffff, ratio * 0.45); // jemná priehľadnosť max 45 %
+                    this.shuttleTrailGraphics.fillCircle(pt.x, pt.y, ratio * 9); // polomer od 1 px po 9 px
+                });
+
+                // 4. Pohyb bota hore (sleduje os X košíka s 80 % šancou)
+                if (this.shuttlecock.body.velocity.y < 0) {
+                    const targetX = this.shuttlecock.x + (this.botMissOffset || 0);
+                    const diffX = targetX - this.bot.x;
+                    if (Math.abs(diffX) > 6) {
+                        this.bot.setVelocityX(Math.sign(diffX) * 240);
+                    } else {
+                        this.bot.setVelocityX(0);
+                    }
+                } else {
+                    // Keď košík letí dole k hráčovi, bot sa vracia do stredu
+                    const centerDiff = (this.gameWidth / 2) - this.bot.x;
+                    this.bot.setVelocityX(Math.abs(centerDiff) > 10 ? Math.sign(centerDiff) * 150 : 0);
+                }
+
+                // 5. Kontrola dotyku s okrajmi obrazovky (kto hodil do okraja, prehral)
+                const margin = 16;
+                const hitSideEdge = this.shuttlecock.x <= margin || this.shuttlecock.x >= this.gameWidth - margin;
+                const hitTopOrBottomEdge = this.shuttlecock.y <= margin || this.shuttlecock.y >= this.gameHeight - margin;
+
+                if (hitSideEdge) {
+                    // Košík vyletel do boku (aut) -> prehral ten, kto ho odpálil
+                    const winner = this.lastHitter === 'player'
+                        ? 'Aut! VYHRAL RADINKO!💩'
+                        : 'Aut! VYHRALA SI MIMKA!🎉💖';
+                    this.endBadmintonRound(winner);
+                } else if (hitTopOrBottomEdge) {
+                    // Košík preletel cez horný alebo dolný okraj -> vyhral ten, kto ho odpálil
+                    const winner = this.lastHitter === 'player'
+                        ? 'VYHRALA SI MIMKA!🎉💖'
+                        : 'VYHRAL RADINKO!💩';
+                    this.endBadmintonRound(winner);
+                }
+            }
+        }
         this.statsUI.container.x = this.player.x;
         this.statsUI.container.y = this.player.y - this.statsUI.offsetY;
         this.statsUI.handPhoneSprite.setPosition(this.player.x + 32, this.player.y + 18);
         this.statsUI.phoneMenu.setPosition(this.statsUI.handPhoneSprite.x + 50, this.statsUI.handPhoneSprite.y - 65);
+    }
+
+    startBadmintonSetup() {
+        this.isBadmintonMode = true;
+        this.switchLocation('outside');
+        gameState.currentLocation = 'badminton';
+        this.isBadmintonPlaying = false;
+
+        // Skryje všetko okrem samotnej zelenej trávy
+        this.outsideGroup.getChildren().forEach((child, index) => {
+            child.setVisible(index === 0);
+        });
+        this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = false);
+
+        this.door.setVisible(false);
+        this.door.body.enable = false;
+        this.bottomWall.body.enable = false;
+        this.theo.setVisible(false);
+        this.theo.body.enable = false;
+
+        this.badmintonGroup.setVisible(true);
+        this.bot.body.enable = true;
+        this.playerRacket.body.enable = true;
+        this.botRacket.body.enable = true;
+        this.shuttlecock.body.enable = true;
+
+        // Hráč DOLE, bot HORE
+        this.player.setPosition(this.gameWidth / 2, this.gameHeight - 100);
+        this.bot.setPosition(this.gameWidth / 2, 100);
+
+        // Raketa vodorovne (na šírku), aby sa s ňou dobre odbíjalo zdola nahor
+        this.playerRacket.setDisplaySize(60, 28);
+        this.botRacket.setDisplaySize(60, 28);
+
+        this.shuttlecock.setPosition(this.gameWidth / 2, this.gameHeight / 2);
+        this.shuttlecock.body.setVelocity(0);
+        this.shuttlecock.setAngle(0);
+
+        this.playBadmintonBtn.setVisible(true);
+        this.lastHitter = null;
+        this.botWillHit = true;
+    }
+
+    startBadmintonRound() {
+        this.shuttleTrailPoints = [];
+        this.shuttleTrailGraphics.clear();
+        this.playBadmintonBtn.setVisible(false);
+        this.isBadmintonPlaying = true;
+        this.lastHitter = 'bot'; // Aby ho mohol hráč hneď odbiť
+        this.botWillHit = Phaser.Math.Between(1, 100) <= 80;
+
+        this.shuttlecock.setPosition(this.gameWidth / 2, this.gameHeight / 2);
+        // Úvodný servis smerom NADOL k hráčovi
+        this.shuttlecock.body.setVelocity(Phaser.Math.Between(-90, 90), 360);
+    }
+
+    hitShuttlecock(racket, isPlayer) {
+        if (!this.isBadmintonPlaying) return;
+        if (isPlayer && this.lastHitter === 'player') return;
+        if (!isPlayer && this.lastHitter === 'bot') return;
+
+        this.lastHitter = isPlayer ? 'player' : 'bot';
+
+        // 1. Výpočet miesta zásahu na rakete podľa osi X (-1 ľavý okraj, 0 stred, +1 pravý okraj)
+        const diffX = this.shuttlecock.x - racket.x;
+        const normalizedHit = Phaser.Math.Clamp(diffX / (racket.displayWidth / 2), -1, 1);
+
+        // 2. Čím bližšie ku stredu rakety, tým vyššia rýchlosť košíka
+        const centerAccuracy = 1 - Math.abs(normalizedHit);
+        const speed = 380 + centerAccuracy * 260;
+
+        // 3. Smer odpalu: hráč (dole) odbíja HORE (-1), bot (hore) odbíja DOLE (+1)
+        const onBottomHalf = racket.y > this.gameHeight / 2;
+        const dirY = onBottomHalf ? -1 : 1;
+        const angle = normalizedHit * (Math.PI / 4); // Uhol doľava/doprava max 45°
+
+        this.shuttlecock.body.setVelocity(
+            Math.sin(angle) * speed,
+            Math.cos(angle) * speed * dirY
+        );
+
+        // Po hráčovom údere sa vyžrebuje 80 % úspešnosť pre bota
+        if (isPlayer) {
+            this.botWillHit = Phaser.Math.Between(1, 100) <= 80;
+            this.botMissOffset = this.botWillHit ? 0 : (Phaser.Math.RND.pick([-1, 1]) * 75);
+        }
+    }
+
+    endBadmintonRound(winnerText) {
+        this.shuttleTrailPoints = [];
+        this.shuttleTrailGraphics.clear();
+        this.isBadmintonPlaying = false;
+        this.shuttlecock.body.setVelocity(0);
+        this.bot.setVelocity(0);
+
+        showFloatingText(this, this.gameWidth / 2, this.gameHeight / 2 - 70, winnerText);
+        this.playBadmintonBtn.setVisible(true);
     }
 }
