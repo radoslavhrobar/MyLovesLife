@@ -25,6 +25,11 @@ export const bedOptions = {
     ]
 };
 
+export const foodOptions = [
+    { img: 'food1', stat: 'hlad', boost: 25, icon: '🍔' },
+    { img: 'food2', stat: 'hlad', boost: 35, icon: '🍕' }
+];
+
 export function showFloatingText(scene, x, y, message) {
     let txt = scene.add.text(x, y, message, {
         fontSize: '18px',

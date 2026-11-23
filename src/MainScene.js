@@ -29,11 +29,14 @@ export default class MainScene extends Phaser.Scene {
         createPhoto('sleep2', 0x1a252f);
         createPhoto('movie1', 0x8e44ad);
         createPhoto('movie2', 0xc0392b);
+        createPhoto('food1', 0xd35400);
+        createPhoto('food2', 0xe67e22);
 
         this.load.image('visitBg', 'src/assets/frontHouse.png');
         this.load.image('car', 'src/assets/car.PNG');
         this.load.image('phone', 'src/assets/car.PNG');
         this.load.image('racket', 'src/assets/car.PNG');
+        this.load.image('stanleyCup', 'src/assets/car.PNG');
     }
 
     create() {
@@ -100,6 +103,17 @@ export default class MainScene extends Phaser.Scene {
         bedG.generateTexture('bedTexture', 110, 170);
 
         this.bed = this.physics.add.staticSprite(this.wallThick + 65, this.gameHeight - this.wallThick - 95, 'bedTexture').setInteractive();
+
+        // --- STOLÍK V IZBE (nalepený na dolnej stene v strede) ---
+        let tableG = this.make.graphics({ x: 0, y: 0, add: false });
+        tableG.fillStyle(0x6d4c41, 1).fillRoundedRect(0, 0, 140, 65, 8);
+        tableG.lineStyle(2, 0x3e2723, 1).strokeRoundedRect(0, 0, 140, 65, 8);
+        tableG.generateTexture('tableTexture', 140, 65);
+
+        // Stred X = this.gameWidth / 2, spodný okraj sa dotýka dolnej steny (this.gameHeight - this.wallThick - 32.5)
+        this.table = this.physics.add.staticSprite(this.gameWidth / 2, this.gameHeight - this.wallThick - 32.5, 'tableTexture')
+            .setInteractive({ useHandCursor: true })
+            .setDepth(6);
 
         let roomWallsG = this.add.graphics().fillStyle(0x7f8c8d, 1).setDepth(5);
         roomWallsG.fillRect(0, 0, this.gameWidth, this.wallThick); // horná
@@ -255,12 +269,22 @@ export default class MainScene extends Phaser.Scene {
         this.physics.add.existing(this.shuttlecock);
         this.shuttlecock.body.setCircle(12, 4, 4);
 
+        // Grafika pre jemný chvostík (trail) za košíkom
+        this.shuttleTrailGraphics = this.add.graphics().setDepth(11);
+        this.shuttleTrailPoints = [];
+        this.badmintonGroup.add(this.shuttleTrailGraphics);
+
+
         // Tlačidlo HRAŤ uprostred obrazovky
         this.playBadmintonBtn = createRoundedButton(this, this.gameWidth / 2, this.gameHeight / 2, 160, 50, 'HRAŤ', 0xff72c4, () => {
             this.startBadmintonRound();
         }).setDepth(35);
 
-        this.badmintonGroup.addMultiple([netLine, this.bot, this.playerRacket, this.botRacket, this.shuttlecock, this.playBadmintonBtn]);
+        this.endBadmintonBtn = createRoundedButton(this, this.gameWidth - 135, 45, 230, 42, 'Poslať Radinka domov 🏠', 0xe74c3c, () => {
+            this.exitBadminton();
+        }).setDepth(35);
+
+        this.badmintonGroup.addMultiple([netLine, this.bot, this.playerRacket, this.botRacket, this.shuttlecock, this.playBadmintonBtn, this.endBadmintonBtn]);
         this.badmintonGroup.setVisible(false);
         this.bot.body.enable = false;
         this.playerRacket.body.enable = false;
@@ -279,6 +303,7 @@ export default class MainScene extends Phaser.Scene {
         this.physics.add.collider(this.player, this.bottomWall);
         this.physics.add.collider(this.player, this.bed);
         this.physics.add.collider(this.player, this.outsideObstacles);
+        this.physics.add.collider(this.player, this.table);
 
         // 4. UI A INTERAKCIE
         this.statsUI = createStatsBubble(this, this.player);
@@ -296,6 +321,17 @@ export default class MainScene extends Phaser.Scene {
                 this.doorMenu.setVisible(false);
             } else {
                 showFloatingText(this, this.bed.x + 40, this.bed.y - 90, 'Si ďaleko mimka!');
+            }
+        });
+
+        this.table.on('pointerdown', () => {
+            if (gameState.isModalOpen || gameState.currentLocation !== 'room') return;
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.table.x, this.table.y) <= 115) {
+                this.tableMenu.setVisible(!this.tableMenu.visible);
+                this.bedMenu.setVisible(false);
+                this.doorMenu.setVisible(false);
+            } else {
+                showFloatingText(this, this.table.x, this.table.y - 55, 'Príď bližšie mimka!');
             }
         });
 
@@ -391,7 +427,7 @@ export default class MainScene extends Phaser.Scene {
         let bedBg = this.add.graphics()
             .fillStyle(0x1e272e, 0.92)
             .fillRoundedRect(-80, -50, 160, 100, 12)
-            .lineStyle(2, 0xffffff, 0.6)
+            .lineStyle(2, 0xff72c4, 0.6)
             .strokeRoundedRect(-80, -50, 160, 100, 12);
 
         let sleepBtn = createRoundedButton(this, 0, -22, 136, 36, 'Idzem spať😴 ', 0x3498db, () => {
@@ -406,12 +442,39 @@ export default class MainScene extends Phaser.Scene {
 
         this.bedMenu.add([bedBg, sleepBtn, movieBtn]);
 
+        // 4. Mini menu stolíka
+        this.tableMenu = this.add.container(this.table.x, this.table.y - 95).setDepth(25).setVisible(false);
+        let tableBg = this.add.graphics()
+            .fillStyle(0x1e272e, 0.92)
+            .fillRoundedRect(-115, -50, 230, 100, 12)
+            .lineStyle(2, 0xff72c4, 0.6)
+            .strokeRoundedRect(-115, -50, 230, 100, 12);
+
+        // 1. Možnosť: Napapať sa + ikona lupy
+        let eatBtn = createRoundedButton(this, 0, -22, 206, 36, 'Napapať sa 🔍', 0xe67e22, () => {
+            this.tableMenu.setVisible(false);
+            showFloatingText(this, this.table.x, this.table.y - 55, 'Mňam, napapaná! 🍔');
+        });
+
+        // 2. Možnosť: Napiť sa vodičky + fotka Stanley cupu vnútri tlačidla
+        let drinkBtn = createRoundedButton(this, 0, 22, 206, 36, 'Napiť sa vodičky', 0x3498db, () => {
+            this.tableMenu.setVisible(false);
+            showFloatingText(this, this.table.x, this.table.y - 55, 'Osviežená zo Stanleyho! 💧');
+        });
+
+        // Posunieme text mierne doľava a vložíme fotku Stanley cupu na pravý okraj tlačidla
+        drinkBtn.label.setX(-14);
+        let stanleyIcon = this.add.image(76, 0, 'stanleyCup').setDisplaySize(22, 28);
+        drinkBtn.add(stanleyIcon);
+
+        this.tableMenu.add([tableBg, eatBtn, drinkBtn]);
+
         // 2. Mini menu dverí
         this.doorMenu = this.add.container(this.door.x + 95, this.door.y + 50).setDepth(25).setVisible(false);
         let doorBg = this.add.graphics()
             .fillStyle(0x1e272e, 0.92)
             .fillRoundedRect(-90, -50, 180, 100, 12)
-            .lineStyle(2, 0xffffff, 0.6)
+            .lineStyle(2, 0xff72c4, 0.6)
             .strokeRoundedRect(-90, -50, 180, 100, 12);
 
         this.doorActionBtn = createRoundedButton(this, 0, -22, 156, 36, 'POME VON!☀️', 0x2ecc71, () => {
@@ -430,7 +493,7 @@ export default class MainScene extends Phaser.Scene {
         let dogBg = this.add.graphics()
             .fillStyle(0x1e272e, 0.92)
             .fillRoundedRect(-95, -50, 190, 100, 12)
-            .lineStyle(2, 0xffffff, 0.6)
+            .lineStyle(2, 0xff72c4, 0.6)
             .strokeRoundedRect(-95, -50, 190, 100, 12);
 
         this.dogActionBtn = createRoundedButton(this, 0, -22, 164, 36, 'Thejko von!🐕', 0xff72c4, () => {
@@ -736,6 +799,7 @@ export default class MainScene extends Phaser.Scene {
         this.bottomWall.body.enable = !isVisit;
 
         this.bed.body.enable = isRoom;
+        this.table.body.enable = isRoom;
         this.roomWalls.getChildren().forEach(wall => wall.body.enable = isRoom);
         this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = isOutside);
 
@@ -805,6 +869,7 @@ export default class MainScene extends Phaser.Scene {
         if (this.cursors.up.isDown || this.touchControls.up) this.player.setVelocityY(-speed);
         else if (this.cursors.down.isDown || this.touchControls.down) this.player.setVelocityY(speed);
         if (this.bedMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bed.x, this.bed.y) > 170) this.bedMenu.setVisible(false);
+        if (this.tableMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.table.x, this.table.y) > 160) this.tableMenu.setVisible(false);
         if (this.doorMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.door.x, this.door.y) > 140) this.doorMenu.setVisible(false);
         if (this.doghouseMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) > 170) this.doghouseMenu.setVisible(false);
         if (this.isPettingTheo && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) > 75) this.stopPettingTheo();
@@ -958,14 +1023,17 @@ export default class MainScene extends Phaser.Scene {
         this.shuttlecock.setAngle(0);
 
         this.playBadmintonBtn.setVisible(true);
+        this.endBadmintonBtn.setVisible(true);
         this.lastHitter = null;
         this.botWillHit = true;
     }
 
     startBadmintonRound() {
+        this.rallyCount = 0;
         this.shuttleTrailPoints = [];
         this.shuttleTrailGraphics.clear();
         this.playBadmintonBtn.setVisible(false);
+        this.endBadmintonBtn.setVisible(false);
         this.isBadmintonPlaying = true;
         this.lastHitter = 'bot'; // Aby ho mohol hráč hneď odbiť
         this.botWillHit = Phaser.Math.Between(1, 100) <= 80;
@@ -981,6 +1049,15 @@ export default class MainScene extends Phaser.Scene {
         if (!isPlayer && this.lastHitter === 'bot') return;
 
         this.lastHitter = isPlayer ? 'player' : 'bot';
+
+        // Zvýšenie počtu odpalov v aktuálnej výmene a výpis +1, +2, +3...
+        this.rallyCount++;
+        showFloatingText(
+            this,
+            racket.x,
+            racket.y + (isPlayer ? -35 : 35),
+            `+${this.rallyCount}`
+        );
 
         // 1. Výpočet miesta zásahu na rakete podľa osi X (-1 ľavý okraj, 0 stred, +1 pravý okraj)
         const diffX = this.shuttlecock.x - racket.x;
@@ -1016,5 +1093,24 @@ export default class MainScene extends Phaser.Scene {
 
         showFloatingText(this, this.gameWidth / 2, this.gameHeight / 2 - 70, winnerText);
         this.playBadmintonBtn.setVisible(true);
+        this.endBadmintonBtn.setVisible(true);
+    }
+
+    exitBadminton() {
+        this.isBadmintonMode = false;
+        this.isBadmintonPlaying = false;
+        this.shuttleTrailPoints = [];
+        this.shuttleTrailGraphics.clear();
+
+        // Skryje a vypne všetky prvky bedmintonu
+        this.badmintonGroup.setVisible(false);
+        this.bot.body.enable = false;
+        this.playerRacket.body.enable = false;
+        this.botRacket.body.enable = false;
+        this.shuttlecock.body.enable = false;
+        this.shuttlecock.body.setVelocity(0);
+
+        // Prepne hráča späť do izby
+        this.switchLocation('room');
     }
 }
