@@ -1,4 +1,5 @@
-import { gameState, statsConfig, bedOptions, showFloatingText } from './state.js';
+import { gameState, statsConfig, theoStatsConfig, showFloatingText} from './state.js';
+
 
 export function createTouchControls(scene, gameWidth, gameHeight, controlsState) {
     const step = 65;
@@ -63,6 +64,7 @@ export function createStatsBubble(scene, player) {
 
     phoneBtn.on('pointerdown', () => {
         handPhoneSprite.setVisible(!handPhoneSprite.visible);
+        phoneMenu.setVisible(false); // Vždy skryje menu s tlačidlom, keď mobil schováš (aj keď ho vytiahneš)
         container.setVisible(false);
     });
 
@@ -130,9 +132,70 @@ export function createStatsBubble(scene, player) {
     return { container, offsetY: panelPosition, handPhoneSprite, phoneMenu};
 }
 
+export function createTheoStatsBubble(scene, doghouse) {
+    const panelWidth = 145;
+    const panelHeight = 95;
+
+    // Posunuté doprava od búdy (+145) a zarovnané na úroveň strechy (-10), aby nezasahovalo do menu
+    let container = scene.add.container(doghouse.x + 145, doghouse.y - 10);
+    container.setVisible(false).setDepth(25);
+
+    let panelBg = scene.add.graphics();
+    panelBg.fillStyle(0xff72c4, 0.75);
+    panelBg.fillRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 8);
+    panelBg.lineStyle(2, 0x000, 0.5);
+    panelBg.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 8);
+    container.add(panelBg);
+
+    const keys = Object.keys(theoStatsConfig);
+    const spacing = panelHeight / (keys.length + 1);
+    let currentY = (-panelHeight / 2) + spacing;
+    const barWidth = 95;
+    const barHeight = 10;
+    const iconX = -panelWidth / 2 + 10;
+    const barX = iconX + 24;
+
+    keys.forEach(key => {
+        let stat = theoStatsConfig[key];
+        let iconText = scene.add.text(iconX, currentY, stat.icon, { fontSize: '14px' }).setOrigin(0, 0.5);
+
+        let barBg = scene.add.graphics();
+        barBg.fillStyle(0x333333, 1);
+        barBg.fillRoundedRect(barX, currentY - barHeight / 2, barWidth, barHeight, 4);
+
+        let fillWidth = (stat.value / 100) * barWidth;
+        let barFill = scene.add.graphics();
+        barFill.fillStyle(stat.color, 1);
+        barFill.fillRoundedRect(barX, currentY - barHeight / 2, fillWidth, barHeight, 4);
+
+        stat.graphics = barFill;
+        stat.y = currentY;
+        stat.x = barX;
+        stat.width = barWidth;
+        stat.height = barHeight;
+
+        container.add([iconText, barBg, barFill]);
+        currentY += spacing;
+    });
+
+    return { container };
+}
+
 export function updateStatsBars() {
     for (let key in statsConfig) {
         let stat = statsConfig[key];
+        stat.value = Phaser.Math.Clamp(stat.value, 0, 100);
+        let fillWidth = (stat.value / 100) * stat.width;
+
+        stat.graphics.clear();
+        stat.graphics.fillStyle(stat.color, 1);
+        stat.graphics.fillRoundedRect(stat.x, stat.y - stat.height / 2, fillWidth, stat.height, 4);
+    }
+}
+
+export function updateTheoStatsBars() {
+    for (let key in theoStatsConfig) {
+        let stat = theoStatsConfig[key];
         stat.value = Phaser.Math.Clamp(stat.value, 0, 100);
         let fillWidth = (stat.value / 100) * stat.width;
 
@@ -254,11 +317,22 @@ export function startActivityTimer(scene, bed, player, option, type) {
             barFill.fillRoundedRect(-barWidth / 2, barY, (progress / 100) * barWidth, 12, 6);
         },
         onComplete: () => {
-            statsConfig[option.stat].value += option.boost;
+            const rewards = option.effects || [{ stat: option.stat, boost: option.boost }];
+            let floatingParts = [];
+
+            rewards.forEach(item => {
+                if (statsConfig[item.stat]) {
+                    statsConfig[item.stat].value += item.boost;
+                    // Zoberie ikonu priamo zo statsConfig (napr. ⚡ alebo 😊), ak ju option nemá
+                    const icon = statsConfig[item.stat].icon;
+                    const sign = item.boost > 0 ? '+' : '';
+                    floatingParts.push(`${sign}${item.boost}${icon}`);
+                }
+            });
             updateStatsBars();
             timerContainer.destroy();
             gameState.isModalOpen = false;
-            showFloatingText(scene, player.x, player.y - 40, `+${option.boost}${option.icon}`);
+            showFloatingText(scene, player.x, player.y - 40, floatingParts.join(' '));
         }
     });
 }

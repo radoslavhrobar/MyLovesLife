@@ -1,5 +1,14 @@
-import { gameState, bedOptions, foodOptions, statsConfig, showFloatingText } from './state.js';
-import { createTouchControls, createStatsBubble, openSelectionModal, createRoundedButton, startActivityTimer, updateStatsBars} from './ui.js';
+import { gameState, bedOptions, foodOptions, statsConfig, showFloatingText, theoStatsConfig} from './state.js';
+import {
+    createTouchControls,
+    createStatsBubble,
+    createTheoStatsBubble,
+    openSelectionModal,
+    createRoundedButton,
+    startActivityTimer,
+    updateStatsBars,
+    updateTheoStatsBars
+} from './ui.js';
 
 export default class MainScene extends Phaser.Scene {
     constructor() {
@@ -43,6 +52,10 @@ export default class MainScene extends Phaser.Scene {
         this.load.image('snackday', 'src/assets/snackday.jpg');
         this.load.image('bananas', 'src/assets/bananiky.jpg');
         this.load.image('mozzarella', 'src/assets/mozzarella.jpg');
+        this.load.image('farma', 'src/assets/farma.jpg');
+        this.load.image('loveisland', 'src/assets/loveisland.jpg');
+        this.load.image('ruza', 'src/assets/ruza.jpg');
+        this.load.image('zamena', 'src/assets/zamena.jpg');
     }
 
     create() {
@@ -313,6 +326,7 @@ export default class MainScene extends Phaser.Scene {
 
         // 4. UI A INTERAKCIE
         this.statsUI = createStatsBubble(this, this.player);
+        this.theoStatsUI = createTheoStatsBubble(this, this.doghouse);
         this.setupMenus();
 
         this.player.on('pointerdown', () => {
@@ -368,8 +382,33 @@ export default class MainScene extends Phaser.Scene {
                 return;
             }
             if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) <= 130) {
-                this.dogActionBtn.label.setText(this.isTheoOutside ? 'MIESTO!🐕' : 'Thejko von!🐕');
-                this.doghouseMenu.setVisible(!this.doghouseMenu.visible);
+                const isTheoInDoghouse = !this.isTheoOutside;
+
+                this.dogActionBtn.label.setText(isTheoInDoghouse ? 'Thejko von!🐕' : 'MIESTO!🐕');
+                this.waterBtn.setVisible(true);             // Voda ostane stále
+                this.feedBtn.setVisible(isTheoInDoghouse);  // Jedlo zmizne, keď je Theo vonku
+
+                this.dogBg.clear();
+                this.dogBg.fillStyle(0x1e272e, 0.92);
+                this.dogBg.lineStyle(2, 0xff72c4, 0.6);
+
+                if (isTheoInDoghouse) {
+                    // Theo je v búde -> 3 tlačidlá
+                    this.dogActionBtn.setY(-44);
+                    this.waterBtn.setY(0);
+                    this.feedBtn.setY(44);
+                    this.dogBg.fillRoundedRect(-95, -70, 190, 140, 12);
+                    this.dogBg.strokeRoundedRect(-95, -70, 190, 140, 12);
+                } else {
+                    // Theo je vonku -> feedBtn je skryté, ostávajú len 2 tlačidlá
+                    this.dogActionBtn.setY(-22);
+                    this.waterBtn.setY(22);
+                    this.dogBg.fillRoundedRect(-95, -50, 190, 100, 12);
+                    this.dogBg.strokeRoundedRect(-95, -50, 190, 100, 12);
+                }
+                const nextState = !this.doghouseMenu.visible;
+                this.doghouseMenu.setVisible(nextState);
+                this.theoStatsUI.container.setVisible(nextState); // Zobrazí/skryje štatistiky spolu s menu búdy
                 this.doorMenu.setVisible(false);
                 this.bedMenu.setVisible(false);
             } else {
@@ -417,14 +456,37 @@ export default class MainScene extends Phaser.Scene {
             // Kontrola priameho dotyku (stred hráča vs stred psa <= 58 px)
             if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) <= 58) {
                 this.startPettingTheo();
+                theoStatsConfig.laska.value += 15;
+                updateTheoStatsBars();
+                showFloatingText(this, this.theo.x, this.theo.y - 35, '❤️HAAAAAAAF❤️');
             } else {
-                showFloatingText(this, this.theo.x, this.theo.y - 35, 'Poď bližšie k Thejkovi! 🐕');
+                showFloatingText(this, this.theo.x, this.theo.y - 35, 'Poď bližšie k Thejkovi!🐕');
             }
         });
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.input.addPointer(2);
         createTouchControls(this, this.gameWidth, this.gameHeight, this.touchControls);
+        // --- POSTUPNÉ KLESANIE ŠTATISTÍK (každých 20 sekúnd o 1) ---
+        this.statsDecayTimer = this.time.addEvent({
+            delay: 20000, // 20 000 ms = 20 sekúnd
+            loop: true,
+            callback: () => {
+                // Ak je otvorené modálne okno (napr. spánok alebo výber jedla), štatistiky neklesajú
+                if (gameState.isModalOpen) return;
+
+                Object.keys(statsConfig).forEach((key) => {
+                    statsConfig[key].value = Math.max(0, statsConfig[key].value - 1);
+                });
+                updateStatsBars();
+
+                // Klesanie aj pre Thea
+                Object.keys(theoStatsConfig).forEach((key) => {
+                    theoStatsConfig[key].value = Math.max(0, theoStatsConfig[key].value - 1);
+                });
+                updateTheoStatsBars();
+            }
+        });
     }
 
     setupMenus() {
@@ -446,7 +508,7 @@ export default class MainScene extends Phaser.Scene {
 
         let movieBtn = createRoundedButton(this, 0, 22, 136, 36, 'Idzem kukať🎬', 0x9b59b6, () => {
             this.bedMenu.setVisible(false);
-            openSelectionModal(this, this.gameWidth, this.gameHeight, 'Aký film si pozrieme?', bedOptions.movie, (opt) => {
+            openSelectionModal(this, this.gameWidth, this.gameHeight, 'Čo si chceš pozrieť?', bedOptions.movie, (opt) => {
                 startActivityTimer(this, this.bed, this.player, opt, 'movie');
             });
         });
@@ -465,11 +527,19 @@ export default class MainScene extends Phaser.Scene {
         let eatBtn = createRoundedButton(this, 0, -22, 206, 36, 'Napapať sa 🔍', 0xe67e22, () => {
             this.tableMenu.setVisible(false);
             openSelectionModal(this, this.gameWidth, this.gameHeight, 'Čo by si si chcela spapkať?', foodOptions, (opt) => {
-                if (statsConfig[opt.stat]) {
-                    statsConfig[opt.stat].value += opt.boost;
-                    updateStatsBars();
-                }
-                showFloatingText(this, this.player.x, this.player.y - 40, `+${opt.boost}🍽️`);
+                const rewards = opt.effects || [{ stat: opt.stat, boost: opt.boost }];
+                let floatingParts = [];
+
+                rewards.forEach(item => {
+                    if (statsConfig[item.stat]) {
+                        statsConfig[item.stat].value += item.boost;
+                        const sign = item.boost > 0 ? '+' : '';
+                        floatingParts.push(`${sign}${item.boost}${statsConfig[item.stat].icon}`);
+                    }
+                });
+
+                updateStatsBars();
+                showFloatingText(this, this.player.x, this.player.y - 40, floatingParts.join(' '));
             });
         });
 
@@ -509,25 +579,37 @@ export default class MainScene extends Phaser.Scene {
 
         this.doorMenu.add([doorBg, this.doorActionBtn, stayBtn]);
 
-        // 3. Mini menu búdy
-        this.doghouseMenu = this.add.container(this.doghouse.x + 25, this.doghouse.y - 115).setDepth(25).setVisible(false);
-        let dogBg = this.add.graphics()
+        // 3. Mini menu búdy (zväčšené pre 3 tlačidlá)
+        this.doghouseMenu = this.add.container(this.doghouse.x + 25, this.doghouse.y - 135).setDepth(25).setVisible(false);
+        this.dogBg = this.add.graphics()
             .fillStyle(0x1e272e, 0.92)
-            .fillRoundedRect(-95, -50, 190, 100, 12)
+            .fillRoundedRect(-95, -70, 190, 140, 12)
             .lineStyle(2, 0xff72c4, 0.6)
-            .strokeRoundedRect(-95, -50, 190, 100, 12);
+            .strokeRoundedRect(-95, -70, 190, 140, 12);
 
-        this.dogActionBtn = createRoundedButton(this, 0, -22, 164, 36, 'Thejko von!🐕', 0xff72c4, () => {
+        this.dogActionBtn = createRoundedButton(this, 0, -44, 164, 36, 'Thejko von!🐕', 0xff72c4, () => {
             this.doghouseMenu.setVisible(false);
+            this.theoStatsUI.container.setVisible(false);
             this.toggleTheo();
         });
 
-        let feedBtn = createRoundedButton(this, 0, 22, 164, 36, 'Doplniť vodu..🥣', 0x3498db, () => {
+        this.waterBtn = createRoundedButton(this, 0, 0, 164, 36, 'Doplniť vodu..💦', 0x3498db, () => {
             this.doghouseMenu.setVisible(false);
+            theoStatsConfig.voda.value += 30;
+            updateTheoStatsBars();
             showFloatingText(this, this.doghouse.x + 40, this.doghouse.y - 60, 'Voda doplnená!💧');
         });
 
-        this.doghouseMenu.add([dogBg, this.dogActionBtn, feedBtn]);
+        this.feedBtn = createRoundedButton(this, 0, 44, 164, 36, 'Dať mu žrať..🍖', 0xe67e22, () => {
+            this.doghouseMenu.setVisible(false);
+            theoStatsConfig.jedlo.value += 30;
+            updateTheoStatsBars();
+            showFloatingText(this, this.doghouse.x + 40, this.doghouse.y - 60, 'MŇAM MŇAM HAF!🍖');
+        });
+
+        // Pridanie všetkých troch tlačidiel do kontajnera
+        this.doghouseMenu.add([this.dogBg, this.dogActionBtn, this.waterBtn, this.feedBtn]);
+
     }
 
     startCallTimer() {
@@ -601,7 +683,7 @@ export default class MainScene extends Phaser.Scene {
 
         if (this.isTheoOutside) {
             // Vypustenie Thea pred búdu
-            this.theo.setPosition(this.doghouse.x + 110, this.doghouse.y);
+            this.theo.setPosition(this.doghouse.x + 155, this.doghouse.y - 105);
             this.theo.setVisible(true);
             this.theo.body.enable = true;
             showFloatingText(this, this.theo.x, this.theo.y - 40, 'Haf!🐕');
@@ -802,7 +884,9 @@ export default class MainScene extends Phaser.Scene {
         const isRoom = target === 'room';
 
         // 1. Reset prebiehajúcich akcií a UI
+        this.statsUI.container.setVisible(false);
         this.theoFetchState = 'none';
+        this.theoStatsUI.container.setVisible(false);
         this.isAimingBall = false;
         this.aimGraphics.clear();
         this.stopPettingTheo();
@@ -829,7 +913,16 @@ export default class MainScene extends Phaser.Scene {
         this.theo.body.enable = showTheo;
         if (!showTheo) this.theo.setVelocity(0);
 
-        if (isVisit) return;
+        if (isVisit) {
+            // Auto má stred v (this.gameWidth - 300, this.gameHeight - 200) a výšku 400 px (horný okraj je -200 od stredu)
+            showFloatingText(
+                this,
+                this.gameWidth - 300,
+                this.gameHeight - 360,
+                'TVOJE HOVIENKO JE TU!💩💗'
+            );
+            return;
+        }
 
         // Zastavenie prípadnej bežiacej animácie dverí
         this.tweens.killTweensOf(this.door);
@@ -892,7 +985,10 @@ export default class MainScene extends Phaser.Scene {
         if (this.bedMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bed.x, this.bed.y) > 170) this.bedMenu.setVisible(false);
         if (this.tableMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.table.x, this.table.y) > 160) this.tableMenu.setVisible(false);
         if (this.doorMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.door.x, this.door.y) > 140) this.doorMenu.setVisible(false);
-        if (this.doghouseMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) > 170) this.doghouseMenu.setVisible(false);
+        if ((this.doghouseMenu.visible || this.theoStatsUI.container.visible) && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) > 170) {
+            this.doghouseMenu.setVisible(false);
+            this.theoStatsUI.container.setVisible(false);
+        }
         if (this.isPettingTheo && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) > 75) this.stopPettingTheo();
         if (this.isAimingBall) {
             if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) > 95) {
