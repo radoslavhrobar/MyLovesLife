@@ -142,11 +142,10 @@ export function updateStatsBars() {
     }
 }
 
-export function openBedModal(scene, gameWidth, gameHeight, bed, player, type) {
+export function openSelectionModal(scene, gameWidth, gameHeight, titleText, options, onSelect) {
     gameState.isModalOpen = true;
-    let modalContainer = scene.add.container(gameWidth / 2, gameHeight / 2).setDepth(50)
+    let modalContainer = scene.add.container(gameWidth / 2, gameHeight / 2).setDepth(50);
 
-    const options = bedOptions[type];
     const count = options.length;
     const cols = count === 1 ? 1 : (count <= 4 ? 2 : 3);
     const rows = Math.ceil(count / cols);
@@ -162,18 +161,21 @@ export function openBedModal(scene, gameWidth, gameHeight, bed, player, type) {
     let bg = scene.add.graphics();
     bg.fillStyle(0x111111, 0.95);
     bg.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
-    bg.lineStyle(3, 0xffffff, 0.8);
+    bg.lineStyle(3, 0xff72c4, 0.85);
     bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
     modalContainer.add(bg);
 
-    const titleText = type === 'sleep' ? 'Vyber si spôsob spánku:' : 'Aký film si pozrieme?';
-    let title = scene.add.text(0, -h / 2 + 35, titleText, { fontSize: '20px', fill: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
+    let title = scene.add.text(0, -h / 2 + 35, titleText, {
+        fontSize: '20px',
+        fill: '#fff',
+        fontStyle: 'bold'
+    }).setOrigin(0.5);
     modalContainer.add(title);
 
     let closeBtn = scene.add.text(w / 2 - 25, -h / 2 + 25, '✖', { fontSize: '22px', fill: '#e74c3c' })
         .setOrigin(0.5).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => {
-        modalContainer.setVisible(false);
+        modalContainer.destroy();
         gameState.isModalOpen = false;
     });
     modalContainer.add(closeBtn);
@@ -194,16 +196,18 @@ export function openBedModal(scene, gameWidth, gameHeight, bed, player, type) {
         photo.on('pointerover', () => photo.setDisplaySize(photoWidth * 1.04, photoHeight * 1.04));
         photo.on('pointerout', () => photo.setDisplaySize(photoWidth, photoHeight));
         photo.on('pointerdown', () => {
-            modalContainer.removeAll(true);
-            modalContainer.setVisible(false);
-            startActivityTimer(scene, bed, player, opt, type);
+            modalContainer.destroy();
+            gameState.isModalOpen = false;
+            onSelect(opt); // Spustí akciu podľa toho, odkiaľ sa okno otvorilo
         });
 
         modalContainer.add(photo);
     });
 }
 
-function startActivityTimer(scene, bed, player, option, type) {
+
+export function startActivityTimer(scene, bed, player, option, type) {
+    gameState.isModalOpen = true;
     let timerContainer = scene.add.container(bed.x + 25, bed.y - 125).setDepth(35);
     const w = 180;
     const h = type === 'movie' ? 115 : 85;

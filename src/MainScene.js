@@ -1,5 +1,5 @@
-import { gameState, showFloatingText } from './state.js';
-import { createTouchControls, createStatsBubble, openBedModal, createRoundedButton} from './ui.js';
+import { gameState, bedOptions, foodOptions, statsConfig, showFloatingText } from './state.js';
+import { createTouchControls, createStatsBubble, openSelectionModal, createRoundedButton, startActivityTimer, updateStatsBars} from './ui.js';
 
 export default class MainScene extends Phaser.Scene {
     constructor() {
@@ -157,7 +157,7 @@ export default class MainScene extends Phaser.Scene {
             .setDepth(6);
         this.door.refreshBody();
 
-        this.roomGroup.addMultiple([carpet, this.bed, roomWallsG]);
+        this.roomGroup.addMultiple([carpet, this.bed, this.table, roomWallsG]);
 
         // 2. DVOR
         let grass = this.add.graphics().fillStyle(0x4caf50, 1).fillRect(0, 0, this.gameWidth, this.gameHeight);
@@ -430,14 +430,19 @@ export default class MainScene extends Phaser.Scene {
             .lineStyle(2, 0xff72c4, 0.6)
             .strokeRoundedRect(-80, -50, 160, 100, 12);
 
+        // --- POSTEĽ (s časovačom) ---
         let sleepBtn = createRoundedButton(this, 0, -22, 136, 36, 'Idzem spať😴 ', 0x3498db, () => {
             this.bedMenu.setVisible(false);
-            openBedModal(this, this.gameWidth, this.gameHeight, this.bed, this.player, 'sleep');
+            openSelectionModal(this, this.gameWidth, this.gameHeight, 'Koho si dať pod ručku?', bedOptions.sleep, (opt) => {
+                startActivityTimer(this, this.bed, this.player, opt, 'sleep');
+            });
         });
 
         let movieBtn = createRoundedButton(this, 0, 22, 136, 36, 'Idzem kukať🎬', 0x9b59b6, () => {
             this.bedMenu.setVisible(false);
-            openBedModal(this, this.gameWidth, this.gameHeight, this.bed, this.player, 'movie');
+            openSelectionModal(this, this.gameWidth, this.gameHeight, 'Aký film si pozrieme?', bedOptions.movie, (opt) => {
+                startActivityTimer(this, this.bed, this.player, opt, 'movie');
+            });
         });
 
         this.bedMenu.add([bedBg, sleepBtn, movieBtn]);
@@ -453,13 +458,19 @@ export default class MainScene extends Phaser.Scene {
         // 1. Možnosť: Napapať sa + ikona lupy
         let eatBtn = createRoundedButton(this, 0, -22, 206, 36, 'Napapať sa 🔍', 0xe67e22, () => {
             this.tableMenu.setVisible(false);
-            showFloatingText(this, this.table.x, this.table.y - 55, 'Mňam, napapaná! 🍔');
+            openSelectionModal(this, this.gameWidth, this.gameHeight, 'Čo by si si chcela spapkať?', foodOptions, (opt) => {
+                if (statsConfig[opt.stat]) {
+                    statsConfig[opt.stat].value += opt.boost;
+                    updateStatsBars();
+                }
+                showFloatingText(this, this.player.x, this.player.y - 40, `+${opt.boost}${opt.icon}`);
+            });
         });
 
         // 2. Možnosť: Napiť sa vodičky + fotka Stanley cupu vnútri tlačidla
         let drinkBtn = createRoundedButton(this, 0, 22, 206, 36, 'Napiť sa vodičky', 0x3498db, () => {
             this.tableMenu.setVisible(false);
-            showFloatingText(this, this.table.x, this.table.y - 55, 'Osviežená zo Stanleyho! 💧');
+            showFloatingText(this, this.player.x, this.player.y - 40, 'JOOOOOJ💧');
         });
 
         // Posunieme text mierne doľava a vložíme fotku Stanley cupu na pravý okraj tlačidla
