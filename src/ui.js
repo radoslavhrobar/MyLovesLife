@@ -152,10 +152,10 @@ export function openSelectionModal(scene, gameWidth, gameHeight, titleText, opti
 
     const w = 480;
     const padding = 20;
-    const headerHeight = 70;
+    const headerHeight = 50;
     const availableWidth = w - padding * (cols + 1);
     const photoWidth = Math.min(200, availableWidth / cols);
-    const photoHeight = photoWidth * 0.7;
+    const photoHeight = photoWidth * 0.9;
     const h = headerHeight + rows * (photoHeight + padding) + padding;
 
     let bg = scene.add.graphics();

@@ -37,6 +37,12 @@ export default class MainScene extends Phaser.Scene {
         this.load.image('phone', 'src/assets/car.PNG');
         this.load.image('racket', 'src/assets/car.PNG');
         this.load.image('stanleyCup', 'src/assets/car.PNG');
+        this.load.image('kapustnica', 'src/assets/kapustnica.webp');
+        this.load.image('sulance', 'src/assets/sulance.jpg');
+        this.load.image('salat', 'src/assets/salat.webp');
+        this.load.image('snackday', 'src/assets/snackday.jpg');
+        this.load.image('bananas', 'src/assets/bananiky.jpg');
+        this.load.image('mozzarella', 'src/assets/mozzarella.jpg');
     }
 
     create() {
@@ -463,14 +469,18 @@ export default class MainScene extends Phaser.Scene {
                     statsConfig[opt.stat].value += opt.boost;
                     updateStatsBars();
                 }
-                showFloatingText(this, this.player.x, this.player.y - 40, `+${opt.boost}${opt.icon}`);
+                showFloatingText(this, this.player.x, this.player.y - 40, `+${opt.boost}🍽️`);
             });
         });
 
         // 2. Možnosť: Napiť sa vodičky + fotka Stanley cupu vnútri tlačidla
         let drinkBtn = createRoundedButton(this, 0, 22, 206, 36, 'Napiť sa vodičky', 0x3498db, () => {
             this.tableMenu.setVisible(false);
-            showFloatingText(this, this.player.x, this.player.y - 40, 'JOOOOOJ💧');
+            if (statsConfig.smad) {
+                statsConfig.smad.value += 25;
+                updateStatsBars(); // Okamžite prekreslí ružovú/modrú lištu v paneli štatistík
+            }
+            showFloatingText(this, this.player.x, this.player.y - 40, '+25💧');
         });
 
         // Posunieme text mierne doľava a vložíme fotku Stanley cupu na pravý okraj tlačidla

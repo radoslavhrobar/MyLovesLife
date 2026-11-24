@@ -7,7 +7,7 @@ export const statsConfig = {
     zamilovanost: { value: 90, icon: '❤️', color: 0xff4d6d },
     energia: { value: 50, icon: '⚡', color: 0xf1c40f },
     nalada: { value: 70, icon: '😊', color: 0x2ecc71 },
-    hlad: { value: 40, icon: '🍔', color: 0xe67e22 },
+    hlad: { value: 40, icon: '🍽️', color: 0xe67e22 },
     smad: { value: 65, icon: '💧', color: 0x3498db }
 };
 
@@ -26,8 +26,12 @@ export const bedOptions = {
 };
 
 export const foodOptions = [
-    { img: 'food1', stat: 'hlad', boost: 25, icon: '🍔' },
-    { img: 'food2', stat: 'hlad', boost: 35, icon: '🍕' }
+    { img: 'snackday', stat: 'hlad', boost: 20},
+    { img: 'bananas', stat: 'hlad', boost: 15},
+    { img: 'mozzarella', stat: 'hlad', boost: 35},
+    { img: 'kapustnica', stat: 'hlad', boost: 45},
+    { img: 'salat', stat: 'hlad', boost: 45},
+    { img: 'sulance', stat: 'hlad', boost: 50}
 ];
 
 export function showFloatingText(scene, x, y, message) {
