@@ -17,6 +17,18 @@ export const theoStatsConfig = {
     laska: { value: 100, icon: '❤️', color: 0xe84393 }
 };
 
+export const quizQuestions = [
+    {
+        question: 'Aká je moja 2. najoblúbenejšia sladkosť?',
+        options: [
+            { text: 'Mars', isCorrect: false },
+            { text: 'Billa kornútok', isCorrect: true },
+            { text: 'Bueno', isCorrect: false },
+            { text: 'Milka', isCorrect: false }
+        ]
+    },
+];
+
 export const bedOptions = {
     sleep: [
         { img: 'sleep1', label: 'Rýchly šlofík', icon: '💤', stat: 'energia', boost: 25 },

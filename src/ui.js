@@ -1,4 +1,4 @@
-import { gameState, statsConfig, theoStatsConfig, showFloatingText} from './state.js';
+import { gameState, statsConfig, theoStatsConfig, showFloatingText, quizQuestions} from './state.js';
 
 
 export function createTouchControls(scene, gameWidth, gameHeight, controlsState) {
@@ -68,10 +68,10 @@ export function createStatsBubble(scene, player) {
         container.setVisible(false);
     });
 
-    // --- MENU NAD MOBILOM V RUKE (samostatný kontajner, nie vnútri štatistík!) ---
+    // --- MENU NAD MOBILOM V RUKE ---
     const menuW = 260;
-    const menuH = 60;
-    let phoneMenu = scene.add.container(handPhoneSprite.x + 50, handPhoneSprite.y - 65)
+    const menuH = 106; // Zväčšené pre 2 tlačidlá
+    let phoneMenu = scene.add.container(handPhoneSprite.x + 50, handPhoneSprite.y - 85)
         .setDepth(25)
         .setVisible(false);
 
@@ -81,7 +81,7 @@ export function createStatsBubble(scene, player) {
         .lineStyle(2, 0xff72c4, 0.6)
         .strokeRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 12);
 
-    let callBtn = createRoundedButton(scene, 0, 0, menuW - 20, 38, 'Zavolať hovienko moje💩❤️', 0xff72c4, () => {
+    let callBtn = createRoundedButton(scene, 0, -24, menuW - 20, 38, 'Zavolať hovienko moje💩❤️', 0xff72c4, () => {
         phoneMenu.setVisible(false);
         handPhoneSprite.setVisible(false);
         container.setVisible(false);
@@ -91,8 +91,15 @@ export function createStatsBubble(scene, player) {
         }
     });
 
+    let quizBtn = createRoundedButton(scene, 0, 24, menuW - 20, 38, 'Zahrať kvíz 💜💙', 0x9b59b6, () => {
+        phoneMenu.setVisible(false);
+        handPhoneSprite.setVisible(false);
+        container.setVisible(false);
 
-    phoneMenu.add([menuBg, callBtn]);
+        openQuizModal(scene, scene.gameWidth, scene.gameHeight, quizQuestions);
+    });
+
+    phoneMenu.add([menuBg, callBtn, quizBtn]);
 
     handPhoneSprite.on('pointerdown', () => {
         phoneMenu.setVisible(!phoneMenu.visible);
@@ -268,6 +275,154 @@ export function openSelectionModal(scene, gameWidth, gameHeight, titleText, opti
     });
 }
 
+export function openQuizModal(scene, gameWidth, gameHeight, questions, currentIndex = 0, score = 0) {
+    if (!questions || questions.length === 0) return;
+
+    if (currentIndex === 0) {
+        questions = [...questions]
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 5);
+    }
+
+    gameState.isModalOpen = true;
+    const qData = questions[currentIndex];
+    let modalContainer = scene.add.container(gameWidth / 2, gameHeight / 2).setDepth(50);
+
+    const count = qData.options.length;
+    const cols = count === 1 ? 1 : (count <= 4 ? 2 : 3);
+    const rows = Math.ceil(count / cols);
+
+    const w = 480;
+    const padding = 20;
+    const headerHeight = 65; // Priestor pre otázku hore
+    const qImgHeight = qData.questionImg ? 115 : 0; // Ak má otázka fotku, pridá priestor
+    const qImgGap = qData.questionImg ? 15 : 0;
+
+    // Štvorcové rámčeky pre odpovede (max 150x150 px)
+    const availableWidth = w - padding * (cols + 1);
+    const cardSize = Math.min(150, availableWidth / cols);
+
+    const h = headerHeight + qImgHeight + qImgGap + rows * (cardSize + padding) + padding;
+
+    // Pozadie modálneho okna
+    let bg = scene.add.graphics();
+    bg.fillStyle(0x111111, 0.95);
+    bg.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
+    bg.lineStyle(3, 0xff72c4, 0.85);
+    bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
+    modalContainer.add(bg);
+
+    // Otázka hore (s automatickým zalamovaním textu)
+    let title = scene.add.text(0, -h / 2 + 38, `${currentIndex + 1}/${questions.length}: ${qData.question}`, {
+        fontSize: '18px',
+        fill: '#ffffff',
+        fontStyle: 'bold',
+        align: 'center',
+        wordWrap: { width: w - 85 }
+    }).setOrigin(0.5);
+    modalContainer.add(title);
+
+    // Tlačidlo zavrieť (X)
+    let closeBtn = scene.add.text(w / 2 - 25, -h / 2 + 25, '✖', { fontSize: '22px', fill: '#e74c3c' })
+        .setOrigin(0.5).setInteractive({ useHandCursor: true });
+    closeBtn.on('pointerdown', () => {
+        modalContainer.destroy();
+        gameState.isModalOpen = false;
+    });
+    modalContainer.add(closeBtn);
+
+    let currentTopY = -h / 2 + headerHeight;
+
+    // Voliteľná fotka pod otázkou
+    if (qData.questionImg) {
+        let qPhoto = scene.add.image(0, currentTopY + qImgHeight / 2, qData.questionImg)
+            .setDisplaySize(180, qImgHeight);
+        modalContainer.add(qPhoto);
+        currentTopY += qImgHeight + qImgGap;
+    }
+
+    let answered = false;
+
+    // Štvorcové rámčeky s odpoveďami (text alebo fotka)
+    qData.options.forEach((opt, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        const itemsInThisRow = (row === rows - 1 && count % cols !== 0) ? (count % cols) : cols;
+        const rowWidth = itemsInThisRow * cardSize + (itemsInThisRow - 1) * padding;
+        const startX = -rowWidth / 2 + cardSize / 2;
+
+        const cardX = startX + col * (cardSize + padding);
+        const cardY = currentTopY + padding / 2 + cardSize / 2 + row * (cardSize + padding);
+
+        let cardContainer = scene.add.container(cardX, cardY);
+
+        let cardBg = scene.add.graphics();
+        const drawCard = (borderColor, fillColor = 0x1e272e) => {
+            cardBg.clear();
+            cardBg.fillStyle(fillColor, 0.95);
+            cardBg.fillRoundedRect(-cardSize / 2, -cardSize / 2, cardSize, cardSize, 12);
+            cardBg.lineStyle(2.5, borderColor, 0.9);
+            cardBg.strokeRoundedRect(-cardSize / 2, -cardSize / 2, cardSize, cardSize, 12);
+        };
+        drawCard(0xff72c4);
+        cardContainer.add(cardBg);
+
+        // Obsah kartičky: fotka alebo centrovaný text
+        if (opt.img) {
+            let optImg = scene.add.image(0, 0, opt.img).setDisplaySize(cardSize - 16, cardSize - 16);
+            cardContainer.add(optImg);
+        }
+        if (opt.text) {
+            let optText = scene.add.text(0, 0, opt.text, {
+                fontSize: '15px',
+                fill: '#ffffff',
+                fontStyle: 'bold',
+                align: 'center',
+                wordWrap: { width: cardSize - 20 }
+            }).setOrigin(0.5);
+            cardContainer.add(optText);
+        }
+
+        cardContainer.setSize(cardSize, cardSize).setInteractive({ useHandCursor: true });
+
+        cardContainer.on('pointerover', () => {
+            if (!answered) cardContainer.setScale(1.04);
+        });
+        cardContainer.on('pointerout', () => {
+            if (!answered) cardContainer.setScale(1);
+        });
+
+        cardContainer.on('pointerdown', () => {
+            if (answered) return;
+            answered = true;
+
+            const isRight = Boolean(opt.isCorrect);
+            const newScore = isRight ? score + 1 : score;
+
+            // Zvýrazní odpoveď na zeleno alebo červeno
+            drawCard(isRight ? 0x2ecc71 : 0xe74c3c, isRight ? 0x145a32 : 0x641e16);
+
+            // Krátke čakanie, aby hráč videl výsledok odpovede, a prechod na ďalšiu otázku
+            scene.time.delayedCall(850, () => {
+                modalContainer.destroy();
+
+                if (currentIndex + 1 < questions.length) {
+                    openQuizModal(scene, gameWidth, gameHeight, questions, currentIndex + 1, newScore);
+                } else {
+                    gameState.isModalOpen = false;
+                    // Odmena za dokončenie kvízu (napr. zvýšenie nálady)
+                    if (statsConfig.nalada) {
+                        statsConfig.nalada.value += newScore * 10;
+                        updateStatsBars();
+                    }
+                    showFloatingText(scene, scene.player.x, scene.player.y - 45, `JAKY KVIZIK MORE! ${newScore}/${questions.length} 🎯💡🤔`);
+                }
+            });
+        });
+
+        modalContainer.add(cardContainer);
+    });
+}
 
 export function startActivityTimer(scene, bed, player, option, type) {
     gameState.isModalOpen = true;
@@ -365,4 +520,3 @@ export function createRoundedButton(scene, x, y, width, height, text, color, onC
 
     return btnContainer;
 }
-
