@@ -44,8 +44,7 @@ export default class MainScene extends Phaser.Scene {
         this.load.image('visitBg', 'src/assets/frontHouse.png');
         this.load.image('car', 'src/assets/car.PNG');
         this.load.image('phone', 'src/assets/car.PNG');
-        this.load.image('racket', 'src/assets/car.PNG');
-        this.load.image('stanleyCup', 'src/assets/car.PNG');
+        this.load.image('stanleyCup', 'src/assets/stanleyCup.png');
         this.load.image('kapustnica', 'src/assets/kapustnica.webp');
         this.load.image('sulance', 'src/assets/sulance.jpg');
         this.load.image('salat', 'src/assets/salat.webp');
@@ -56,6 +55,9 @@ export default class MainScene extends Phaser.Scene {
         this.load.image('loveisland', 'src/assets/loveisland.jpg');
         this.load.image('ruza', 'src/assets/ruza.jpg');
         this.load.image('zamena', 'src/assets/zamena.jpg');
+        this.load.image('playerRacket', 'src/assets/rraketa.png');
+        this.load.image('botRacket', 'src/assets/bracket.png');
+        this.load.image('shuttlecock', 'src/assets/shuttlecock.png');
     }
 
     create() {
@@ -168,9 +170,9 @@ export default class MainScene extends Phaser.Scene {
         doorBottomG.fillCircle(17, 3, 3);
         doorBottomG.generateTexture('doorBottomTexture', 75, 26);
 
-        // Nalepené na ľavú stenu (this.wallThick) a posunuté hore (this.wallThick + 55)
+        // Nalepené na ľavú stenu (this.wallThick) a posunuté hore (this.wallThick + 100)
         // Stred textúry je v X = this.wallThick + 13 (polovica zo šírky 26)
-        this.door = this.physics.add.staticSprite(this.wallThick, this.wallThick + 65, 'doorUpperTexture')
+        this.door = this.physics.add.staticSprite(this.wallThick, this.wallThick + 100, 'doorUpperTexture')
             .setOrigin(0, 0)
             .setInteractive({ useHandCursor: true })
             .setDepth(6);
@@ -263,12 +265,12 @@ export default class MainScene extends Phaser.Scene {
             .setCollideWorldBounds(true);
 
         // Raketa hráča a raketa bota (fotky s fyzikou pre presné hitboxy)
-        this.playerRacket = this.physics.add.sprite(this.player.x, this.player.y - 28, 'racket')
+        this.playerRacket = this.physics.add.sprite(this.player.x, this.player.y - 28, 'playerRacket')
             .setDisplaySize(32, 56)
             .setDepth(9);
         this.playerRacket.body.setAllowGravity(false);
 
-        this.botRacket = this.physics.add.sprite(this.bot.x, this.bot.y + 28, 'racket')
+        this.botRacket = this.physics.add.sprite(this.bot.x, this.bot.y + 28, 'botRacket')
             .setDisplaySize(32, 56)
             .setFlipY(true)
             .setDepth(9);
@@ -281,12 +283,13 @@ export default class MainScene extends Phaser.Scene {
         netLine.lineTo(this.gameWidth, this.gameHeight / 2);
         netLine.strokePath();
 
-        // Ikona košíka (fyzikálny objekt s točením)
-        this.shuttlecock = this.add.text(this.gameWidth / 2, this.gameHeight / 2, '🏸', { fontSize: '28px' })
-            .setOrigin(0.5)
+        // Fotka košíka (fyzikálny objekt s točením)
+        this.shuttlecock = this.physics.add.sprite(this.gameWidth / 2, this.gameHeight / 2, 'shuttlecock')
+            .setDisplaySize(28, 28) // uprav si šírku a výšku podľa pomeru tvojej fotky
             .setDepth(12);
-        this.physics.add.existing(this.shuttlecock);
-        this.shuttlecock.body.setCircle(12, 4, 4);
+        this.shuttlecock.body.setAllowGravity(false);
+        this.shuttlecock.body.setCircle(12, (this.shuttlecock.width - 24) / 2, (this.shuttlecock.height - 24) / 2);
+
 
         // Grafika pre jemný chvostík (trail) za košíkom
         this.shuttleTrailGraphics = this.add.graphics().setDepth(11);
@@ -944,7 +947,7 @@ export default class MainScene extends Phaser.Scene {
             // DVERE V IZBE: hore vľavo nalepené na ľavú stenu
             this.door.setTexture('doorUpperTexture');
             this.door.setOrigin(0, 0); // Pánt vľavo hore pri stene
-            this.door.setPosition(this.wallThick, this.wallThick + 65);
+            this.door.setPosition(this.wallThick, this.wallThick + 100);
             this.door.refreshBody();
             this.door.input.hitArea.setSize(26, 75);
 
