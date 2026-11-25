@@ -2,9 +2,9 @@ import { gameState, statsConfig, theoStatsConfig, showFloatingText, quizQuestion
 
 
 export function createTouchControls(scene, gameWidth, gameHeight, controlsState) {
-    const step = 65;
-    const startX = gameWidth - (step * 2.5);
-    const startY = gameHeight - (step * 3.0);
+    const gap = 72;                  // rozostup medzi stredmi tlačidiel
+    const marginX = 52;              // odsadenie od ľavého a pravého okraja
+    const bottomY = gameHeight - 55; // výška od spodného okraja
 
     const createBtn = (x, y, symbol, key) => {
         let btn = scene.add.image(x, y, 'buttonBg').setInteractive().setDepth(20);
@@ -15,12 +15,14 @@ export function createTouchControls(scene, gameWidth, gameHeight, controlsState)
         btn.on('pointerout', () => { btn.clearTint(); controlsState[key] = false; });
     };
 
-    createBtn(startX + step, startY, '▲', 'up');
-    createBtn(startX + step, startY + step * 1.4, '▼', 'down');
-    createBtn(startX, startY + step * 0.7, '◀', 'left');
-    createBtn(startX + step * 2, startY + step * 0.7, '▶', 'right');
-}
+    // Ľavý dolný roh: NAĽAVO (◀) a vedľa toho HORE (▲)
+    createBtn(marginX, bottomY, '◀', 'left');
+    createBtn(marginX + gap, bottomY, '▲', 'up');
 
+    // Pravý dolný roh: DOLE (▼) a vedľa toho NAPRAVO (▶)
+    createBtn(gameWidth - marginX - gap, bottomY, '▼', 'down');
+    createBtn(gameWidth - marginX, bottomY, '▶', 'right');
+}
 export function createStatsBubble(scene, player) {
     const panelWidth = 180;
     const panelHeight = 125;

@@ -121,7 +121,7 @@ export default class MainScene extends Phaser.Scene {
         bedG.fillStyle(0xe74c3c, 1).fillRoundedRect(8, 55, 94, 107, 6);
         bedG.generateTexture('bedTexture', 110, 170);
 
-        this.bed = this.physics.add.staticSprite(this.wallThick + 65, this.gameHeight - this.wallThick - 95, 'bedTexture').setInteractive();
+        this.bed = this.physics.add.staticSprite(this.wallThick + 65, this.gameHeight - this.wallThick - 200, 'bedTexture').setInteractive();
 
         // --- STOLÍK V IZBE (nalepený na dolnej stene v strede) ---
         let tableG = this.make.graphics({ x: 0, y: 0, add: false });
@@ -139,8 +139,8 @@ export default class MainScene extends Phaser.Scene {
         roomWallsG.fillRect(0, 0, this.wallThick, this.gameHeight); // ľavá
         roomWallsG.fillRect(this.gameWidth - this.wallThick, 0, this.wallThick, this.gameHeight); // pravá
 
-        let bottomWallG = this.add.graphics().fillStyle(0x7f8c8d, 1).setDepth(5);
-        bottomWallG.fillRect(0, this.gameHeight - this.wallThick, this.gameWidth, this.wallThick); // dolná (ostáva)
+        this.bottomWallG = this.add.graphics().fillStyle(0x7f8c8d, 1).setDepth(5);
+        this.bottomWallG.fillRect(0, this.gameHeight - this.wallThick, this.gameWidth, this.wallThick); // dolná (ostáva)
 
         this.roomWalls = this.physics.add.staticGroup();
         this.roomWalls.create(this.gameWidth / 2, this.wallThick / 2).setSize(this.gameWidth, this.wallThick).setVisible(false);
@@ -170,8 +170,8 @@ export default class MainScene extends Phaser.Scene {
 
         // Nalepené na ľavú stenu (this.wallThick) a posunuté hore (this.wallThick + 55)
         // Stred textúry je v X = this.wallThick + 13 (polovica zo šírky 26)
-        this.door = this.physics.add.staticSprite(this.wallThick, this.wallThick, 'doorUpperTexture')
-            .setOrigin(0,0)
+        this.door = this.physics.add.staticSprite(this.wallThick, this.wallThick + 65, 'doorUpperTexture')
+            .setOrigin(0, 0)
             .setInteractive({ useHandCursor: true })
             .setDepth(6);
         this.door.refreshBody();
@@ -189,7 +189,7 @@ export default class MainScene extends Phaser.Scene {
         dogG.fillStyle(0x1e272e, 1).fillRoundedRect(40, 65, 40, 55, { tl: 20, tr: 20, bl: 0, br: 0 });
         dogG.generateTexture('doghouseTexture', 120, 120);
 
-        this.doghouse = this.outsideObstacles.create(this.wallThick + 75, this.gameHeight - this.wallThick - 75, 'doghouseTexture')
+        this.doghouse = this.outsideObstacles.create(this.wallThick + 75, this.gameHeight - this.wallThick - 180, 'doghouseTexture')
             .setInteractive({ useHandCursor: true });
         this.outsideGroup.add(this.doghouse);
 
@@ -902,6 +902,7 @@ export default class MainScene extends Phaser.Scene {
         this.door.setVisible(!isVisit);
         this.door.body.enable = !isVisit;
         this.bottomWall.body.enable = !isVisit;
+        this.bottomWallG.setVisible(!isVisit);
 
         this.bed.body.enable = isRoom;
         this.table.body.enable = isRoom;
@@ -932,7 +933,7 @@ export default class MainScene extends Phaser.Scene {
             // DVERE VONKU: dole vpravo nalepené na spodnú stenu
             this.door.setTexture('doorBottomTexture');
             this.door.setOrigin(0, 1); // Pánt vľavo dole pri stene
-            this.door.setPosition(this.gameWidth - this.wallThick - 75 - 20, this.gameHeight - this.wallThick);
+            this.door.setPosition(this.gameWidth - this.wallThick - 245, this.gameHeight - this.wallThick);
             this.door.refreshBody();
             this.door.input.hitArea.setSize(75, 26);
 
@@ -943,7 +944,7 @@ export default class MainScene extends Phaser.Scene {
             // DVERE V IZBE: hore vľavo nalepené na ľavú stenu
             this.door.setTexture('doorUpperTexture');
             this.door.setOrigin(0, 0); // Pánt vľavo hore pri stene
-            this.door.setPosition(this.wallThick, this.wallThick);
+            this.door.setPosition(this.wallThick, this.wallThick + 65);
             this.door.refreshBody();
             this.door.input.hitArea.setSize(26, 75);
 
@@ -1118,6 +1119,7 @@ export default class MainScene extends Phaser.Scene {
         this.door.setVisible(false);
         this.door.body.enable = false;
         this.bottomWall.body.enable = false;
+        this.bottomWallG.setVisible(false);
         this.theo.setVisible(false);
         this.theo.body.enable = false;
 
