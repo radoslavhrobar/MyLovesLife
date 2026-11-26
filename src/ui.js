@@ -26,7 +26,7 @@ export function createTouchControls(scene, gameWidth, gameHeight, controlsState)
 export function createStatsBubble(scene, player) {
     const panelWidth = 180;
     const panelHeight = 125;
-    const panelPosition = panelHeight / 2 + 25;
+    const panelPosition = panelHeight / 2 + 50;
 
     let container = scene.add.container(player.x, player.y - panelPosition);
     container.setVisible(false).setDepth(15);
@@ -440,18 +440,37 @@ export function startActivityTimer(scene, bed, player, option, type) {
     timerContainer.add(bg);
 
     let timeY = 0, barY = 0;
+    let bedSleepPhoto = null;
+    const origX = player.x;
+    const origY = player.y;
 
     if (type === 'sleep') {
-        let sleepIcon = scene.add.text(-25, -22, option.icon, { fontSize: '20px' }).setOrigin(0.5);
-        let zzzText = scene.add.text(12, -20, '💤😴', { fontSize: '15px', fill: '#74b9ff', fontStyle: 'italic bold' }).setOrigin(0.5);
-        timerContainer.add([sleepIcon, zzzText]);
+        let zzzText = scene.add.text(0, -20, '💤😴', { fontSize: '18px', fill: '#74b9ff', fontStyle: 'italic bold' }).setOrigin(0.5);
+        timerContainer.add(zzzText);
 
         scene.tweens.add({ targets: zzzText, y: -30, scale: 1.15, alpha: 0.4, duration: 900, yoyo: true, repeat: -1 });
         timeY = -2; barY = 16;
+
+        player.setVisible(false);
+        if (scene.statsUI) {
+            scene.statsUI.container.setVisible(false);
+            scene.statsUI.handPhoneSprite.setVisible(false);
+            scene.statsUI.phoneMenu.setVisible(false);
+        }
+
+        if (option.bedImg) {
+            bedSleepPhoto = scene.add.image(bed.x, bed.y, option.bedImg)
+                .setDisplaySize(bed.displayWidth, bed.displayHeight)
+                .setDepth(bed.depth + 1);
+        }
     } else {
         let moviePhoto = scene.add.image(0, -24, option.img).setDisplaySize(75, 48);
         timerContainer.add(moviePhoto);
         timeY = 12; barY = 30;
+
+        // Presun hráča na stred postele počas pozerania filmu
+        if (bed.body) bed.body.enable = false;
+        player.setPosition(bed.x, bed.y);
     }
 
     let timeText = scene.add.text(0, timeY, type === 'sleep' ? 'Chrapkaš: 5.0 s' : 'Pozerkaš: 5.0 s', { fontSize: '12px', fill: '#bdc3c7' }).setOrigin(0.5);
@@ -480,12 +499,21 @@ export function startActivityTimer(scene, bed, player, option, type) {
             rewards.forEach(item => {
                 if (statsConfig[item.stat]) {
                     statsConfig[item.stat].value += item.boost;
-                    // Zoberie ikonu priamo zo statsConfig (napr. ⚡ alebo 😊), ak ju option nemá
-                    const icon = statsConfig[item.stat].icon;
+                    const icon = option.icon || statsConfig[item.stat].icon;
                     const sign = item.boost > 0 ? '+' : '';
                     floatingParts.push(`${sign}${item.boost}${icon}`);
                 }
             });
+
+            if (bedSleepPhoto) bedSleepPhoto.destroy();
+            if (type === 'sleep') {
+                player.setVisible(true);
+            } else {
+                // Návrat hráča na pôvodné miesto a opätovné zapnutie kolízie postele
+                player.setPosition(origX, origY);
+                if (bed.body) bed.body.enable = true;
+            }
+
             updateStatsBars();
             timerContainer.destroy();
             gameState.isModalOpen = false;

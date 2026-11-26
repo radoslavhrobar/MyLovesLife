@@ -27,24 +27,10 @@ export default class MainScene extends Phaser.Scene {
         btnGraphic.lineStyle(3, 0xffffff, 0.8).strokeRoundedRect(0, 0, 60, 60, 10);
         btnGraphic.generateTexture('buttonBg', 60, 60);
 
-        const createPhoto = (key, color) => {
-            let g = this.make.graphics({ x: 0, y: 0, add: false });
-            g.fillStyle(color, 1).fillRoundedRect(0, 0, 160, 110, 10);
-            g.lineStyle(3, 0xffffff, 0.8).strokeRoundedRect(0, 0, 160, 110, 10);
-            g.generateTexture(key, 160, 110);
-        };
-
-        createPhoto('sleep1', 0x2c3e50);
-        createPhoto('sleep2', 0x1a252f);
-        createPhoto('movie1', 0x8e44ad);
-        createPhoto('movie2', 0xc0392b);
-        createPhoto('food1', 0xd35400);
-        createPhoto('food2', 0xe67e22);
-
         this.load.image('visitBg', 'src/assets/frontHouse.png');
         this.load.image('car', 'src/assets/car.PNG');
-        this.load.image('phone', 'src/assets/car.PNG');
-        this.load.image('stanleyCup', 'src/assets/stanleyCup.png');
+        this.load.image('phone', 'src/assets/phoneOut.png');
+        this.load.image('stanleyMima', 'src/assets/drinkStanley.png');
         this.load.image('kapustnica', 'src/assets/kapustnica.webp');
         this.load.image('sulance', 'src/assets/sulance.jpg');
         this.load.image('salat', 'src/assets/salat.webp');
@@ -58,6 +44,34 @@ export default class MainScene extends Phaser.Scene {
         this.load.image('playerRacket', 'src/assets/rraketa.png');
         this.load.image('botRacket', 'src/assets/bracket.png');
         this.load.image('shuttlecock', 'src/assets/shuttlecock.png');
+        this.load.image('srdiecko', 'src/assets/srdiecko.png');
+        this.load.image('table', 'src/assets/tableRoom.jpeg');
+        this.load.image('bed', 'src/assets/bedRoom.jpeg');
+        this.load.image('wardrobe', 'src/assets/wardrobeRoom.jpeg');
+        this.load.image('me', 'src/assets/me.png');
+        this.load.image('audi', 'src/assets/audi.webp');
+        this.load.image('carpet', 'src/assets/carpetRoom.jpeg');
+        this.load.image('dodge', 'src/assets/dodge.jpg');
+        this.load.image('doghouseTheo', 'src/assets/doghouseTheo.jpeg');
+        this.load.image('doghouseWithout', 'src/assets/doghouseWithout.jpeg');
+        this.load.image('fruitPlate', 'src/assets/fruitPlate.png');
+        this.load.image('illnessCar', 'src/assets/illnessCar.jpeg');
+        this.load.image('ily', 'src/assets/ily.png');
+        this.load.image('lancer', 'src/assets/lancer.jpg');
+        this.load.image('mercedes', 'src/assets/mercedes.webp');
+        this.load.image('mimkaLove', 'src/assets/mimkaLove.png');
+        this.load.image('pinkyM', 'src/assets/pinkyM.png');
+        this.load.image('pinkyy', 'src/assets/pinkyy.png');
+        this.load.image('ppernicek', 'src/assets/ppernicek.png');
+        this.load.image('ppernicekM', 'src/assets/ppernicekM.png');
+        this.load.image('rosinkaa', 'src/assets/rosinkaa.png');
+        this.load.image('rosinkaM', 'src/assets/rosinkaM.png');
+        this.load.image('rudo', 'src/assets/rudo.png');
+        this.load.image('rudoM', 'src/assets/rudoM.png');
+        this.load.image('sadMimka', 'src/assets/sadMimka.png');
+        this.load.image('stone', 'src/assets/stone.png');
+        this.load.image('theoHappy', 'src/assets/theoHappy.png');
+        this.load.image('theoOrgasmic', 'src/assets/theoOrgasmic.png');
     }
 
     create() {
@@ -114,27 +128,65 @@ export default class MainScene extends Phaser.Scene {
 
         // 1. IZBA
         this.cameras.main.setBackgroundColor('#a16c4b');
-        const carpetW = this.gameWidth * 0.7, carpetH = this.gameHeight * 0.6;
-        let carpet = this.add.graphics().fillStyle(0x3a5a40, 1).fillRect((this.gameWidth - carpetW) / 2, (this.gameHeight - carpetH) / 2, carpetW, carpetH);
+        const carpetW = this.gameWidth * 0.7;
+        const carpetH = this.gameHeight * 0.6;
+        let carpet = this.add.image(this.gameWidth / 2, this.gameHeight / 2, 'carpet')
+            .setDisplaySize(carpetW, carpetH)
+            .setDepth(1);
 
-        let bedG = this.make.graphics({ x: 0, y: 0, add: false });
-        bedG.fillStyle(0x5c3a21, 1).fillRoundedRect(0, 0, 110, 170, 8);
-        bedG.fillStyle(0xecf0f1, 1).fillRoundedRect(10, 10, 90, 40, 6);
-        bedG.fillStyle(0xe74c3c, 1).fillRoundedRect(8, 55, 94, 107, 6);
-        bedG.generateTexture('bedTexture', 110, 170);
-
-        this.bed = this.physics.add.staticSprite(this.wallThick + 65, this.gameHeight - this.wallThick - 200, 'bedTexture').setInteractive();
-
-        // --- STOLÍK V IZBE (nalepený na dolnej stene v strede) ---
-        let tableG = this.make.graphics({ x: 0, y: 0, add: false });
-        tableG.fillStyle(0x6d4c41, 1).fillRoundedRect(0, 0, 140, 65, 8);
-        tableG.lineStyle(2, 0x3e2723, 1).strokeRoundedRect(0, 0, 140, 65, 8);
-        tableG.generateTexture('tableTexture', 140, 65);
-
-        // Stred X = this.gameWidth / 2, spodný okraj sa dotýka dolnej steny (this.gameHeight - this.wallThick - 32.5)
-        this.table = this.physics.add.staticSprite(this.gameWidth / 2, this.gameHeight - this.wallThick - 32.5, 'tableTexture')
+        const bedW = 145;
+        const bedH = 215;
+        this.bed = this.physics.add.sprite(
+            this.wallThick + bedW / 2 + 8,
+            this.gameHeight - this.wallThick - 205,
+            'bed'
+        )
+            .setDisplaySize(bedW, bedH)
+            .setAngle(180)
+            .setImmovable(true)
             .setInteractive({ useHandCursor: true })
             .setDepth(6);
+
+        this.bed.body.setAllowGravity(false);
+
+        // --- STOLÍK V IZBE (otočený o 90° doprava a nalepený na dolnej stene) ---
+        const tableWidth = 210;  // zväčšená šírka (pôvodne 160)
+        const tableHeight = 110; // zväčšená výška (pôvodne 85)
+
+        this.table = this.physics.add.sprite(
+            this.gameWidth / 2,
+            this.gameHeight - this.wallThick - tableHeight / 2,
+            'table'
+        )
+            .setDisplaySize(tableHeight, tableWidth)
+            .setAngle(90)
+            .setImmovable(true)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(6);
+
+        this.table.body.setAllowGravity(false);
+
+        this.table.body.setSize(
+            tableWidth / this.table.scaleX,
+            tableHeight / this.table.scaleY,
+            true
+        );
+
+        // --- SKRIŇA V IZBE (nalepená na hornej stene v strede) ---
+        const wardrobeW = 260;
+        const wardrobeH = 240;
+
+        this.wardrobe = this.physics.add.sprite(
+            this.gameWidth / 2,
+            this.wallThick + wardrobeH / 2,
+            'wardrobe'
+        )
+            .setDisplaySize(wardrobeW, wardrobeH)
+            .setImmovable(true)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(6);
+
+        this.wardrobe.body.setAllowGravity(false);
 
         let roomWallsG = this.add.graphics().fillStyle(0x7f8c8d, 1).setDepth(5);
         roomWallsG.fillRect(0, 0, this.gameWidth, this.wallThick); // horná
@@ -178,21 +230,30 @@ export default class MainScene extends Phaser.Scene {
             .setDepth(6);
         this.door.refreshBody();
 
-        this.roomGroup.addMultiple([carpet, this.bed, this.table, roomWallsG]);
+        this.roomGroup.addMultiple([carpet, this.bed, this.table, this.wardrobe, roomWallsG]);
 
         // 2. DVOR
         let grass = this.add.graphics().fillStyle(0x4caf50, 1).fillRect(0, 0, this.gameWidth, this.gameHeight);
         grass.fillStyle(0x388e3c, 1).fillRect(150, 200, 30, 10).fillRect(420, 500, 35, 12);
         this.outsideGroup.add(grass);
 
-        let dogG = this.make.graphics({ x: 0, y: 0, add: false });
-        dogG.fillStyle(0x8d6e63, 1).fillRoundedRect(10, 30, 100, 90, 6);
-        dogG.fillStyle(0xc0392b, 1).fillTriangle(0, 35, 60, 0, 120, 35);
-        dogG.fillStyle(0x1e272e, 1).fillRoundedRect(40, 65, 40, 55, { tl: 20, tr: 20, bl: 0, br: 0 });
-        dogG.generateTexture('doghouseTexture', 120, 120);
+        // --- BÚDA NA DVORE (širšia a vyššia: 160 x 180 px) ---
+        this.doghouseW = 160;
+        this.doghouseH = 180;
+        this.doghouse = this.physics.add.sprite(
+            this.wallThick + this.doghouseW / 2 + 10,
+            this.gameHeight - this.wallThick - 205,
+            'doghouseTheo'
+        )
+            .setDisplaySize(this.doghouseW, this.doghouseH)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(6);
 
-        this.doghouse = this.outsideObstacles.create(this.wallThick + 75, this.gameHeight - this.wallThick - 180, 'doghouseTexture')
-            .setInteractive({ useHandCursor: true });
+        this.doghouse.body.setAllowGravity(false);
+        this.doghouse.body.setImmovable(true);
+        this.doghouse.body.moves = false; // Zaručí, že búdou nič nepohne
+        this.doghouse.body.enable = false; // Na štarte v izbe je vypnutá
+
         this.outsideGroup.add(this.doghouse);
 
         let treeG = this.make.graphics({ x: 0, y: 0, add: false });
@@ -229,18 +290,19 @@ export default class MainScene extends Phaser.Scene {
         this.outsideGroup.setVisible(false);
         this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = false);
 
-        this.playerWidth = 40;
-        this.playerHeight = 40;
+        this.playerWidth = 100;
+        this.playerHeight = 100;
 
-        let playerG = this.make.graphics({ x: 0, y: 0, add: false }).fillStyle(0x3498db, 1).fillRect(0, 0, this.playerWidth, this.playerHeight);
-        playerG.generateTexture('playerTexture', this.playerWidth, this.playerHeight);
+        this.player = this.physics.add.sprite(this.gameWidth / 2, this.gameHeight / 2, 'srdiecko')
+            .setDisplaySize(this.playerWidth, this.playerHeight)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(8)
+            .setCollideWorldBounds(true);
 
-        this.player = this.physics.add.sprite(this.gameWidth / 2, this.gameHeight / 2, 'playerTexture').setInteractive().setDepth(8).setCollideWorldBounds(true);
 
-        let theoG = this.make.graphics({ x: 0, y: 0, add: false }).fillStyle(0xd35400, 1).fillRect(0, 0, 36, 36);
-        theoG.generateTexture('theoTexture', 36, 36);
-
-        this.theo = this.physics.add.sprite(this.doghouse.x + 85, this.doghouse.y, 'theoTexture')
+        this.theoSize = 75;
+        this.theo = this.physics.add.sprite(this.doghouse.x + 85, this.doghouse.y, 'theoHappy')
+            .setDisplaySize(this.theoSize, this.theoSize)
             .setDepth(8)
             .setCollideWorldBounds(true)
             .setInteractive({ useHandCursor: true });
@@ -257,10 +319,8 @@ export default class MainScene extends Phaser.Scene {
         this.badmintonGroup = this.add.group();
 
         // Druhý hráč (bot - fialovo-ružový štvorec)
-        let botG = this.make.graphics({ x: 0, y: 0, add: false }).fillStyle(0xe84393, 1).fillRect(0, 0, 40, 40);
-        botG.generateTexture('botTexture', 40, 40);
-
-        this.bot = this.physics.add.sprite(this.gameWidth / 2, 100, 'botTexture')
+        this.bot = this.physics.add.sprite(this.gameWidth / 2, 100, 'me')
+            .setDisplaySize(this.playerWidth, this.playerHeight)
             .setDepth(8)
             .setCollideWorldBounds(true);
 
@@ -290,12 +350,10 @@ export default class MainScene extends Phaser.Scene {
         this.shuttlecock.body.setAllowGravity(false);
         this.shuttlecock.body.setCircle(12, (this.shuttlecock.width - 24) / 2, (this.shuttlecock.height - 24) / 2);
 
-
         // Grafika pre jemný chvostík (trail) za košíkom
         this.shuttleTrailGraphics = this.add.graphics().setDepth(11);
         this.shuttleTrailPoints = [];
         this.badmintonGroup.add(this.shuttleTrailGraphics);
-
 
         // Tlačidlo HRAŤ uprostred obrazovky
         this.playBadmintonBtn = createRoundedButton(this, this.gameWidth / 2, this.gameHeight / 2, 160, 50, 'HRAŤ', 0xff72c4, () => {
@@ -325,7 +383,10 @@ export default class MainScene extends Phaser.Scene {
         this.physics.add.collider(this.player, this.bottomWall);
         this.physics.add.collider(this.player, this.bed);
         this.physics.add.collider(this.player, this.outsideObstacles);
+        this.physics.add.collider(this.player, this.doghouse);
+        this.physics.add.collider(this.theo, this.doghouse);
         this.physics.add.collider(this.player, this.table);
+        this.physics.add.collider(this.player, this.wardrobe);
 
         // 4. UI A INTERAKCIE
         this.statsUI = createStatsBubble(this, this.player);
@@ -339,7 +400,7 @@ export default class MainScene extends Phaser.Scene {
 
         this.bed.on('pointerdown', () => {
             if (gameState.isModalOpen || gameState.currentLocation !== 'room') return;
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bed.x, this.bed.y) <= 110) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bed.x, this.bed.y) <= 165) {
                 this.bedMenu.setVisible(!this.bedMenu.visible);
                 this.doorMenu.setVisible(false);
             } else {
@@ -349,7 +410,7 @@ export default class MainScene extends Phaser.Scene {
 
         this.table.on('pointerdown', () => {
             if (gameState.isModalOpen || gameState.currentLocation !== 'room') return;
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.table.x, this.table.y) <= 115) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.table.x, this.table.y) <= 150) {
                 this.tableMenu.setVisible(!this.tableMenu.visible);
                 this.bedMenu.setVisible(false);
                 this.doorMenu.setVisible(false);
@@ -366,7 +427,7 @@ export default class MainScene extends Phaser.Scene {
             }
             // Kontrola vzdialenosti od stredu dverí (getCenter) je presnejšia
             const doorCenter = this.door.getCenter();
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, doorCenter.x, doorCenter.y) <= 100) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, doorCenter.x, doorCenter.y) <= 130) {
                 this.doorActionBtn.label.setText(gameState.currentLocation === 'room' ? 'POME VON! ☀️' : 'POME DOMOV!🏠');
                 this.doorMenu.setVisible(!this.doorMenu.visible);
                 this.bedMenu.setVisible(false);
@@ -384,11 +445,11 @@ export default class MainScene extends Phaser.Scene {
                 showFloatingText(this, pointer.x, pointer.y - 25, 'Tam nemôžeš hodiť!🚫');
                 return;
             }
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) <= 130) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) <= 175) {
                 const isTheoInDoghouse = !this.isTheoOutside;
 
                 this.dogActionBtn.label.setText(isTheoInDoghouse ? 'Thejko von!🐕' : 'MIESTO!🐕');
-                this.waterBtn.setVisible(true);             // Voda ostane stále
+                this.waterBtn.setVisible(true);             // Voda ostane stále    
                 this.feedBtn.setVisible(isTheoInDoghouse);  // Jedlo zmizne, keď je Theo vonku
 
                 this.dogBg.clear();
@@ -457,7 +518,7 @@ export default class MainScene extends Phaser.Scene {
                 return;
             }
             // Kontrola priameho dotyku (stred hráča vs stred psa <= 58 px)
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) <= 58) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) <= 90) {
                 this.startPettingTheo();
                 theoStatsConfig.laska.value += 15;
                 updateTheoStatsBars();
@@ -547,19 +608,24 @@ export default class MainScene extends Phaser.Scene {
         });
 
         // 2. Možnosť: Napiť sa vodičky + fotka Stanley cupu vnútri tlačidla
-        let drinkBtn = createRoundedButton(this, 0, 22, 206, 36, 'Napiť sa vodičky', 0x3498db, () => {
+        let drinkBtn = createRoundedButton(this, 0, 22, 206, 36, 'Napiť sa vodičky💧', 0x3498db, () => {
             this.tableMenu.setVisible(false);
             if (statsConfig.smad) {
                 statsConfig.smad.value += 25;
                 updateStatsBars(); // Okamžite prekreslí ružovú/modrú lištu v paneli štatistík
             }
             showFloatingText(this, this.player.x, this.player.y - 40, '+25💧');
-        });
 
-        // Posunieme text mierne doľava a vložíme fotku Stanley cupu na pravý okraj tlačidla
-        drinkBtn.label.setX(-14);
-        let stanleyIcon = this.add.image(76, 0, 'stanleyCup').setDisplaySize(22, 28);
-        drinkBtn.add(stanleyIcon);
+            // Zmena textúry hráča na fotku so Stanley cupom na 3 sekundy
+            this.player.setTexture('stanleyMima');
+            this.player.setDisplaySize(this.playerWidth, this.playerHeight);
+
+            if (this.drinkResetTimer) this.drinkResetTimer.remove();
+            this.drinkResetTimer = this.time.delayedCall(3000, () => {
+                this.player.setTexture('srdiecko');
+                this.player.setDisplaySize(this.playerWidth, this.playerHeight);
+            });
+        });
 
         this.tableMenu.add([tableBg, eatBtn, drinkBtn]);
 
@@ -685,7 +751,13 @@ export default class MainScene extends Phaser.Scene {
         this.isTheoOutside = !this.isTheoOutside;
 
         if (this.isTheoOutside) {
-            // Vypustenie Thea pred búdu
+            // Zmena búdy na prázdnu
+            this.doghouse.setTexture('doghouseWithout');
+            this.doghouse.setDisplaySize(this.doghouseW, this.doghouseH);
+            this.doghouse.body.setImmovable(true);
+            // Vypustenie Thea pred búdu s fotkou theoHappy
+            this.theo.setTexture('theoHappy');
+            this.theo.setDisplaySize(this.theoSize, this.theoSize);
             this.theo.setPosition(this.doghouse.x + 155, this.doghouse.y - 105);
             this.theo.setVisible(true);
             this.theo.body.enable = true;
@@ -711,6 +783,10 @@ export default class MainScene extends Phaser.Scene {
                 });
             }
         } else {
+            // Zmena búdy na búdu s Theom vnútri
+            this.doghouse.setTexture('doghouseTheo');
+            this.doghouse.setDisplaySize(this.doghouseW, this.doghouseH);
+            this.doghouse.body.setImmovable(true);
             // Zatvorenie Thea do búdy
             this.stopPettingTheo();
             this.theo.setVelocity(0);
@@ -723,6 +799,8 @@ export default class MainScene extends Phaser.Scene {
 
     startPettingTheo() {
         this.isPettingTheo = true;
+        this.theo.setTexture('theoOrgasmic');
+        this.theo.setDisplaySize(this.theoSize, this.theoSize);
         this.theo.setVelocity(0);
         this.theo.body.immovable = true; // Aby hráč psa pri dotyku neodtláčal
 
@@ -770,6 +848,8 @@ export default class MainScene extends Phaser.Scene {
     stopPettingTheo() {
         if (!this.isPettingTheo) return;
         this.isPettingTheo = false;
+        this.theo.setTexture('theoHappy');
+        this.theo.setDisplaySize(this.theoSize, this.theoSize);
         this.theo.body.immovable = false;
 
         // Zničenie animácie ruky a časovača srdiečok
@@ -791,6 +871,7 @@ export default class MainScene extends Phaser.Scene {
     isPointBlocked(x, y) {
         const colliders = [
             ...this.outsideObstacles.getChildren(),
+            this.doghouse,
             this.door,
             ...(this.isTheoOutside ? [this.theo] : [])
         ];
@@ -909,8 +990,10 @@ export default class MainScene extends Phaser.Scene {
 
         this.bed.body.enable = isRoom;
         this.table.body.enable = isRoom;
+        this.wardrobe.body.enable = isRoom;
         this.roomWalls.getChildren().forEach(wall => wall.body.enable = isRoom);
         this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = isOutside);
+        this.doghouse.body.enable = isOutside;
 
         const showTheo = isOutside && this.isTheoOutside;
         this.theo.setVisible(showTheo);
@@ -986,16 +1069,16 @@ export default class MainScene extends Phaser.Scene {
         else if (this.cursors.right.isDown || this.touchControls.right) this.player.setVelocityX(speed);
         if (this.cursors.up.isDown || this.touchControls.up) this.player.setVelocityY(-speed);
         else if (this.cursors.down.isDown || this.touchControls.down) this.player.setVelocityY(speed);
-        if (this.bedMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bed.x, this.bed.y) > 170) this.bedMenu.setVisible(false);
-        if (this.tableMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.table.x, this.table.y) > 160) this.tableMenu.setVisible(false);
-        if (this.doorMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.door.x, this.door.y) > 140) this.doorMenu.setVisible(false);
-        if ((this.doghouseMenu.visible || this.theoStatsUI.container.visible) && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) > 170) {
+        if (this.bedMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bed.x, this.bed.y) > 205) this.bedMenu.setVisible(false);
+        if (this.tableMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.table.x, this.table.y) > 195) this.tableMenu.setVisible(false);
+        if (this.doorMenu.visible && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.door.x, this.door.y) > 170) this.doorMenu.setVisible(false);
+        if ((this.doghouseMenu.visible || this.theoStatsUI.container.visible) && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.doghouse.x, this.doghouse.y) > 215) {
             this.doghouseMenu.setVisible(false);
             this.theoStatsUI.container.setVisible(false);
         }
-        if (this.isPettingTheo && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) > 75) this.stopPettingTheo();
+        if (this.isPettingTheo && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) > 110) this.stopPettingTheo();
         if (this.isAimingBall) {
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) > 95) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) > 125) {
                 this.isAimingBall = false;
                 this.aimGraphics.clear();
             } else {
@@ -1014,10 +1097,10 @@ export default class MainScene extends Phaser.Scene {
             } else if (this.theoFetchState === 'toPlayer') {
                 // 2. Theo nesie loptičku v papuli späť k hráčovi
                 this.physics.moveToObject(this.theo, this.player, 240);
-                this.ball.setPosition(this.theo.x + this.theo.width / 2 + this.halfBall, this.theo.y);
+                this.ball.setPosition(this.theo.x + this.theoSize / 2 + this.halfBall, this.theo.y);
 
                 // Keď dobehne k hráčovi, položí loptičku pred neho a vráti sa k voľnému behaniu
-                if (Phaser.Math.Distance.Between(this.theo.x, this.theo.y, this.player.x, this.player.y) <= 58) {
+                if (Phaser.Math.Distance.Between(this.theo.x, this.theo.y, this.player.x, this.player.y) <= 90) {
                     this.theoFetchState = 'none';
                     this.ball.setPosition(this.theo.x, this.theo.y);
                     this.setTheoSettings();
@@ -1037,7 +1120,7 @@ export default class MainScene extends Phaser.Scene {
             this.playerRacket.setFlipX(playerOnLeft); // Zrkadlové otočenie pri prechode na ľavú polku
             this.playerRacket.setPosition(
                 this.player.x,
-                this.player.y - 28
+                this.player.y - 48
             );
 
             // 2. Raketa bota (hore)
@@ -1045,7 +1128,7 @@ export default class MainScene extends Phaser.Scene {
             this.botRacket.setFlipX(botOnLeft);
             this.botRacket.setPosition(
                 this.bot.x,
-                this.bot.y + 28
+                this.bot.y + 48
             );
 
             if (this.isBadmintonPlaying) {
@@ -1103,7 +1186,7 @@ export default class MainScene extends Phaser.Scene {
         }
         this.statsUI.container.x = this.player.x;
         this.statsUI.container.y = this.player.y - this.statsUI.offsetY;
-        this.statsUI.handPhoneSprite.setPosition(this.player.x + 32, this.player.y + 18);
+        this.statsUI.handPhoneSprite.setPosition(this.player.x + 50, this.player.y + 35);
         this.statsUI.phoneMenu.setPosition(this.statsUI.handPhoneSprite.x + 50, this.statsUI.handPhoneSprite.y - 65);
     }
 
@@ -1118,6 +1201,7 @@ export default class MainScene extends Phaser.Scene {
             child.setVisible(index === 0);
         });
         this.outsideObstacles.getChildren().forEach(obj => obj.body.enable = false);
+        this.doghouse.body.enable = false; // Vypne neviditeľnú kolíziu búdy počas bedmintonu
 
         this.door.setVisible(false);
         this.door.body.enable = false;
@@ -1137,8 +1221,8 @@ export default class MainScene extends Phaser.Scene {
         this.bot.setPosition(this.gameWidth / 2, 100);
 
         // Raketa vodorovne (na šírku), aby sa s ňou dobre odbíjalo zdola nahor
-        this.playerRacket.setDisplaySize(60, 28);
-        this.botRacket.setDisplaySize(60, 28);
+        this.playerRacket.setDisplaySize(95, 44);
+        this.botRacket.setDisplaySize(95, 44);
 
         this.shuttlecock.setPosition(this.gameWidth / 2, this.gameHeight / 2);
         this.shuttlecock.body.setVelocity(0);
@@ -1151,6 +1235,8 @@ export default class MainScene extends Phaser.Scene {
     }
 
     startBadmintonRound() {
+        this.player.setTexture('srdiecko');
+        this.player.setDisplaySize(this.playerWidth, this.playerHeight);
         this.rallyCount = 0;
         this.shuttleTrailPoints = [];
         this.shuttleTrailGraphics.clear();
@@ -1213,12 +1299,20 @@ export default class MainScene extends Phaser.Scene {
         this.shuttlecock.body.setVelocity(0);
         this.bot.setVelocity(0);
 
+        // Ak vyhral bot (nie Mimka), hráč sa zmení na sadMimka
+        if (!winnerText.includes('MIMKA')) {
+            this.player.setTexture('sadMimka');
+            this.player.setDisplaySize(this.playerWidth, this.playerHeight);
+        }
+
         showFloatingText(this, this.gameWidth / 2, this.gameHeight / 2 - 70, winnerText);
         this.playBadmintonBtn.setVisible(true);
         this.endBadmintonBtn.setVisible(true);
     }
 
     exitBadminton() {
+        this.player.setTexture('srdiecko');
+        this.player.setDisplaySize(this.playerWidth, this.playerHeight);
         this.isBadmintonMode = false;
         this.isBadmintonPlaying = false;
         this.shuttleTrailPoints = [];

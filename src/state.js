@@ -31,9 +31,10 @@ export const quizQuestions = [
 
 export const bedOptions = {
     sleep: [
-        { img: 'sleep1', label: 'Rýchly šlofík', icon: '💤', stat: 'energia', boost: 25 },
-        { img: 'sleep2', label: 'Spánok v objatí', icon: '🫂', stat: 'energia', boost: 50 },
-        { img: 'sleep1', label: 'Víkendové leňošenie', icon: '🛌', stat: 'energia', boost: 40 }
+        { img: 'rudo', bedImg: 'rudoM', stat: 'energia', boost: 50},
+        { img: 'rosinkaa', bedImg: 'rosinkaM', stat: 'energia', boost: 50},
+        { img: 'ppernicek', bedImg: 'ppernicekM', stat: 'energia', boost: 50},
+        { img: 'pinkyy', bedImg: 'pinkyM', stat: 'energia', boost: 50}
     ],
     movie: [
         { img: 'farma', effects: [{ stat: 'energia', boost: 30}, { stat: 'nalada', boost: 20}] },
