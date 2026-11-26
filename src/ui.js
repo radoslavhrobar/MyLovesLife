@@ -297,8 +297,8 @@ export function openQuizModal(scene, gameWidth, gameHeight, questions, currentIn
     const w = 480;
     const padding = 20;
     const headerHeight = 65; // Priestor pre otázku hore
-    const qImgHeight = qData.questionImg ? 115 : 0; // Ak má otázka fotku, pridá priestor
-    const qImgGap = qData.questionImg ? 15 : 0;
+    const qImgHeight = qData.questionImg ? 180 : 0; // Ak má otázka fotku, pridá priestor
+    const qImgGap = qData.questionImg ? 10 : 0;
 
     // Štvorcové rámčeky pre odpovede (max 150x150 px)
     const availableWidth = w - padding * (cols + 1);
@@ -371,7 +371,7 @@ export function openQuizModal(scene, gameWidth, gameHeight, questions, currentIn
 
         // Obsah kartičky: fotka alebo centrovaný text
         if (opt.img) {
-            let optImg = scene.add.image(0, 0, opt.img).setDisplaySize(cardSize - 16, cardSize - 16);
+            let optImg = scene.add.image(0, 0, opt.img).setDisplaySize(cardSize - 5, cardSize - 5);
             cardContainer.add(optImg);
         }
         if (opt.text) {

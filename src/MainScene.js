@@ -92,6 +92,16 @@ export default class MainScene extends Phaser.Scene {
             .setDisplaySize(600, 400) // uprav si rozmery podľa potreby
             .setDepth(31);
 
+        // 1b. Mimka v okne domu (uprav si X, Y a veľkosť presne podľa okna na fotke frontHouse.png)
+        let windowMimka = this.add.image(65, 70, 'mimkaLove')
+            .setDisplaySize(80, 80)
+            .setDepth(31);
+
+        // 2b. Šofér v aute (uprav si posun od stredu auta rightPhoto.x / rightPhoto.y podľa okienka auta)
+        let carDriver = this.add.image(rightPhoto.x + 60, rightPhoto.y - 135, 'me')
+            .setDisplaySize(80, 80)
+            .setDepth(32);
+
         // 3. Lomená šípka vychádzajúca zľava hore (napr. z [40, 40] -> zlom [40, 140] -> do rámčeka)
         let arrowG = this.add.graphics().setDepth(32);
         arrowG.lineStyle(4, 0xff00fb, 0.95);
@@ -123,7 +133,7 @@ export default class MainScene extends Phaser.Scene {
         }).setDepth(33);
 
         // Pridanie všetkých prvkov do skupiny a skrytie na štarte
-        this.visitGroup.addMultiple([visitBg, rightPhoto, arrowG, inviteBox, enterBtn]);
+        this.visitGroup.addMultiple([visitBg, rightPhoto, windowMimka, carDriver, arrowG, inviteBox, enterBtn]);
         this.visitGroup.setVisible(false);
 
         // 1. IZBA
@@ -1313,6 +1323,7 @@ export default class MainScene extends Phaser.Scene {
     exitBadminton() {
         this.player.setTexture('srdiecko');
         this.player.setDisplaySize(this.playerWidth, this.playerHeight);
+
         this.isBadmintonMode = false;
         this.isBadmintonPlaying = false;
         this.shuttleTrailPoints = [];
@@ -1326,7 +1337,22 @@ export default class MainScene extends Phaser.Scene {
         this.shuttlecock.body.enable = false;
         this.shuttlecock.body.setVelocity(0);
 
+        if (statsConfig.nalada) statsConfig.nalada.value += 50;
+        if (statsConfig.energia) statsConfig.energia.value += 25;
+        if (statsConfig.zamilovanost) statsConfig.zamilovanost.value += 50;
+        updateStatsBars();
+
         // Prepne hráča späť do izby
         this.switchLocation('room');
+
+        // Zobrazí plávajúci text len pre štatistiky, ktoré v statsConfig existujú
+        let floatingParts = [];
+        if (statsConfig.nalada) floatingParts.push(`+50${statsConfig.nalada.icon}`);
+        if (statsConfig.energia) floatingParts.push(`+25${statsConfig.energia.icon}`);
+        if (statsConfig.zamilovanost) floatingParts.push(`+50${statsConfig.zamilovanost.icon}`);
+
+        if (floatingParts.length > 0) {
+            showFloatingText(this, this.player.x, this.player.y - 45, floatingParts.join(' '));
+        }
     }
 }

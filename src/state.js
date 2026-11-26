@@ -27,6 +27,79 @@ export const quizQuestions = [
             { text: 'Milka', isCorrect: false }
         ]
     },
+    {
+        question: 'Aká je moja najobľúbenejšia sladkosť?',
+        options: [
+            { text: 'Mars', isCorrect: true },
+            { text: 'Billa kornútok', isCorrect: false },
+            { text: 'Bueno', isCorrect: false },
+            { text: 'Milka', isCorrect: false }
+        ]
+    },
+    {
+        question: 'Ako sa volala pláž v Grécku, na ktorej som nechal ten kamienok, čo som si chcel zobrať domov?',
+        questionImg: 'stone',
+        options: [
+            { text: 'Paleokastritsa', isCorrect: false },
+            { text: 'Issos', isCorrect: false },
+            { text: 'Porto Timoni', isCorrect: true },
+            { text: 'Gardenos', isCorrect: false }
+        ]
+    },
+    {
+        question: 'V akom období vznikla táto fotka a čo sme robili?',
+        questionImg: 'illnessCar',
+        options: [
+            { text: 'Jar - chillovali v aute - choručka si bola', isCorrect: false },
+            { text: 'Zima - chillovali v aute - išli sme ku mne potom', isCorrect: false },
+            { text: 'Leto - chillovali v aute - choručka si bola', isCorrect: true }
+        ]
+    },
+    {
+        question: 'Kedy sme si to povedali?',
+        questionImg: 'ily',
+        options: [
+            { text: '17. júl', isCorrect: false },
+            { text: '19. jún', isCorrect: false },
+            { text: '26. máj', isCorrect: false },
+            { text: '12. jún', isCorrect: true }
+        ]
+    },
+    {
+        question: 'U koho sme si spravili takúto bombičku?',
+        questionImg: 'fruitPlate',
+        options: [
+            { text: 'U teba', isCorrect: false },
+            { text: 'U mňa', isCorrect: true }
+        ]
+    },
+    {
+        question: 'Aký je môj 3. najobľúbenejší plyšák?',
+        options: [
+            { text: 'Rudo', isCorrect: false },
+            { text: 'Rosinka', isCorrect: false },
+            { text: 'Mačička', isCorrect: true },
+            { text: 'Pinky', isCorrect: false }
+        ]
+    },
+    {
+        question: 'Aký je môj najobľúbenejší seriál z týchto štyroch?',
+        options: [
+            { text: 'Supernatural', isCorrect: false },
+            { text: 'Mentalista', isCorrect: false },
+            { text: 'Akty X', isCorrect: false },
+            { text: 'Prison Break', isCorrect: true }
+        ]
+    },
+    {
+        question: 'Ktoré auto z týchto štyroch by som si vybral? (všetky sú tesné, ale jedno vyhralo)',
+        options: [
+            { img: 'dodge', isCorrect: false },
+            { img: 'audi', isCorrect: false },
+            { img: 'mercedes', isCorrect: false },
+            { img: 'lancer', isCorrect: true }
+        ]
+    }
 ];
 
 export const bedOptions = {
