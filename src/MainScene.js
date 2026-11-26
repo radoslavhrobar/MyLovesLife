@@ -576,6 +576,80 @@ export default class MainScene extends Phaser.Scene {
                 updateTheoStatsBars();
             }
         });
+
+        const helpBtnW = 115;
+        const helpBtnH = 38;
+        this.helpBtn = createRoundedButton(
+            this,
+            this.gameWidth - this.wallThick - helpBtnW / 2 - 8,
+            this.wallThick + 40,
+            helpBtnW,
+            helpBtnH,
+            'Nápoveda 💡',
+            0xff72c4,
+            () => {
+                if (gameState.isModalOpen || gameState.currentLocation !== 'room') return;
+                this.openHelpModal();
+            }
+        ).setDepth(20);
+
+        // Pridáme tlačidlo do roomGroup, aby sa automaticky skrylo, keď vyjdeš z izby na dvor
+        this.roomGroup.add(this.helpBtn);
+    }
+
+    openHelpModal() {
+        gameState.isModalOpen = true;
+        let modalContainer = this.add.container(this.gameWidth / 2, this.gameHeight / 2).setDepth(50);
+
+        const w = Math.min(540, this.gameWidth - 40);
+        const h = 390; // Zväčšená výška okna kvôli novým riadkom
+
+        // Tmavé pozadie s ružovým orámovaním (rovnaký štýl ako ostatné okná)
+        let bg = this.add.graphics();
+        bg.fillStyle(0x111111, 0.95);
+        bg.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
+        bg.lineStyle(3, 0xff72c4, 0.85);
+        bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
+        modalContainer.add(bg);
+
+        // Nadpis okna
+        let title = this.add.text(0, -h / 2 + 32, 'Nápoveda 💖', {
+            fontSize: '20px',
+            fill: '#ff72c4',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        modalContainer.add(title);
+
+        // Tlačidlo zavrieť (✖) v pravom hornom rohu
+        let closeBtn = this.add.text(w / 2 - 25, -h / 2 + 25, '✖', { fontSize: '22px', fill: '#e74c3c' })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+        closeBtn.on('pointerdown', () => {
+            modalContainer.destroy();
+            gameState.isModalOpen = false;
+        });
+        modalContainer.add(closeBtn);
+
+        // Samotný text nápovedy
+        const helpMessage =
+            'Ahoj cica, toto je MINIHRA - Taká menšia simulácia tvojho života.\n' +
+            'Dole máš šípky, ktorými ovládaš tvoj pohyb.\n' +
+            'Keď klikneš na seba, máš tam svoje štatistiky, o ktoré sa dá starať.\n' +
+            'Vedľa tých štatistík máš aj mobil hehe, aj on vie niečo robiť 😃.\n' +
+            'V izbe máš objekty - skús po nich poklikať, možno nejaký niečo robí.\n' +
+            'Hore naľavo máš aj dvere, na ne tiež môžeš kliknúť, kde sa vieš dostať vonku, kde máš ďalšie veci.\n' +
+            'Loptička vonku sa hádže tak, že na ňu podržíš prstom a hodíš na miesto, kde ti ukazuje šípka.\n' +
+            'Môžeš sa s tým pohrať srdenkooo mojeee ❤️‍🔥';
+
+        let bodyText = this.add.text(0, 12, helpMessage, {
+            fontSize: '15px',
+            fill: '#ffffff',
+            align: 'center',
+            lineSpacing: 6,
+            wordWrap: { width: w - 50 }
+        }).setOrigin(0.5);
+        modalContainer.add(bodyText);
     }
 
     setupMenus() {
