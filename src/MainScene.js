@@ -493,29 +493,41 @@ export default class MainScene extends Phaser.Scene {
             }
         });
 
-        // 1. Kliknutie na loptičku -> zapne mierenie (ak je hráč blízko)
-        this.ball.on('pointerdown', () => {
+        // 1. Stlačenie loptičky (prstom alebo myšou) -> zapne mierenie
+        this.ball.on('pointerdown', (pointer) => {
             if (gameState.isModalOpen || gameState.currentLocation !== 'outside' || this.isBallFlying
                 || this.theoFetchState !== 'none') return;
 
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) <= this.halfBall + (this.player.width / 2) + 30) {
-                this.isAimingBall = !this.isAimingBall;
-                if (!this.isAimingBall) this.aimGraphics.clear();
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) <= this.halfBall + (this.playerWidth / 2) + 30) {
+                this.isAimingBall = true;
+                this.drawAimArrow(pointer);
             } else {
                 showFloatingText(this, this.ball.x, this.ball.y - 30, 'Príď bližšie k loptičke!');
             }
         });
 
-        // 2. Druhé kliknutie kamkoľvek na obrazovku -> hodí loptičku na miesto kurzora
-        this.input.on('pointerdown', (pointer, currentlyOver) => {
-            if (currentlyOver.length > 0) return; // Ak je kliknutie na interaktívny objekt, ignorujeme ho
+        this.input.on('pointermove', (pointer) => {
             if (!this.isAimingBall || gameState.isModalOpen || gameState.currentLocation !== 'outside') return;
+            this.drawAimArrow(pointer);
+        });
 
-            // Ochrana, aby sa loptička nehodila do dolnej steny alebo mimo obrazovku
+        // 3. Pustenie prsta/myši -> hodí loptičku na cieľové miesto
+        this.input.on('pointerup', (pointer) => {
+            if (!this.isAimingBall) return;
+
             const targetX = Phaser.Math.Clamp(pointer.x, 25, this.gameWidth - 25);
             const targetY = Phaser.Math.Clamp(pointer.y, 25, this.gameHeight - this.wallThick - 20);
 
+            // Ak hráč pustil prst priamo na loptičke (len ťukol), mierenie sa zruší bez hodu
+            if (Phaser.Math.Distance.Between(this.ball.x, this.ball.y, targetX, targetY) < 20) {
+                this.isAimingBall = false;
+                this.aimGraphics.clear();
+                return;
+            }
+
             if (this.isPointBlocked(targetX, targetY)) {
+                this.isAimingBall = false;
+                this.aimGraphics.clear();
                 showFloatingText(this, targetX, targetY - 25, 'Tam nemôžeš hodiť!🚫');
                 return;
             }
@@ -742,10 +754,10 @@ export default class MainScene extends Phaser.Scene {
         this.tweens.addCounter({
             from: 0,
             to: 100,
-            duration: 200,
+            duration: 5000,
             onUpdate: (tween) => {
                 const progress = tween.getValue();
-                const remaining = ((100 - progress) / 100 * 2).toFixed(1);
+                const remaining = ((100 - progress) / 100 * 5).toFixed(1);
                 timeText.setText(`${remaining} s`);
 
                 barFill.clear();
@@ -1090,13 +1102,9 @@ export default class MainScene extends Phaser.Scene {
             this.theoStatsUI.container.setVisible(false);
         }
         if (this.isPettingTheo && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) > 110) this.stopPettingTheo();
-        if (this.isAimingBall) {
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) > 100) {
-                this.isAimingBall = false;
-                this.aimGraphics.clear();
-            } else {
-                this.drawAimArrow(this.input.activePointer);
-            }
+        if (this.isAimingBall && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) > 135) {
+            this.isAimingBall = false;
+            this.aimGraphics.clear();
         }
         // --- APORTOVANIE LOPTIČKY ---
         if (this.isTheoOutside && gameState.currentLocation === 'outside' && !gameState.isModalOpen) {
@@ -1117,7 +1125,17 @@ export default class MainScene extends Phaser.Scene {
                     this.theoFetchState = 'none';
                     this.ball.setPosition(this.theo.x, this.theo.y);
                     this.setTheoSettings();
-                    showFloatingText(this, this.theo.x, this.theo.y - 35, 'HAF!🐾');
+
+                    // Zvýšenie lásky o 10 a prekreslenie lišty
+                    if (theoStatsConfig.laska) {
+                        theoStatsConfig.laska.value += 10;
+                        updateTheoStatsBars();
+                    }
+
+                    const fetchText = theoStatsConfig.laska
+                        ? `HAF!🐾 +10${theoStatsConfig.laska.icon}`
+                        : 'HAF!🐾';
+                    showFloatingText(this, this.theo.x, this.theo.y - 35, fetchText);
                 }
             }
         }
