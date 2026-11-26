@@ -288,8 +288,11 @@ export default class MainScene extends Phaser.Scene {
         ballG.generateTexture('pinkBallTexture', this.halfBall * 2, this.halfBall * 2);
 
         this.ball = this.add.sprite(this.gameWidth / 2, 120, 'pinkBallTexture')
-            .setDepth(7)
-            .setInteractive({ useHandCursor: true });
+            .setDepth(10) // Vyšší depth ako hráč (8), aby ju veľké srdiečko nikdy neprekrylo
+            .setInteractive(
+                new Phaser.Geom.Circle(this.halfBall, this.halfBall, 34), // Väčšia neviditeľná plocha pre prst (polomer 34 px)
+                Phaser.Geom.Circle.Contains
+            );
         this.outsideGroup.add(this.ball);
 
         // Grafika pre bielu mieriaci šípku
@@ -495,7 +498,7 @@ export default class MainScene extends Phaser.Scene {
             if (gameState.isModalOpen || gameState.currentLocation !== 'outside' || this.isBallFlying
                 || this.theoFetchState !== 'none') return;
 
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) <= this.halfBall + (this.player.width / 2) + 10) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) <= this.halfBall + (this.player.width / 2) + 30) {
                 this.isAimingBall = !this.isAimingBall;
                 if (!this.isAimingBall) this.aimGraphics.clear();
             } else {
@@ -1088,7 +1091,7 @@ export default class MainScene extends Phaser.Scene {
         }
         if (this.isPettingTheo && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.theo.x, this.theo.y) > 110) this.stopPettingTheo();
         if (this.isAimingBall) {
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) > 125) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.ball.x, this.ball.y) > 100) {
                 this.isAimingBall = false;
                 this.aimGraphics.clear();
             } else {
