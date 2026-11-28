@@ -16,11 +16,11 @@ export function createTouchControls(scene, gameWidth, gameHeight, controlsState)
     };
 
     // Ľavý dolný roh: NAĽAVO (◀) a vedľa toho HORE (▲)
-    createBtn(marginX, bottomY, '◀', 'left');
-    createBtn(marginX + gap, bottomY, '▲', 'up');
+    createBtn(marginX, bottomY, '▲', 'up');
+    createBtn(marginX + gap, bottomY, '▼', 'down');
 
     // Pravý dolný roh: DOLE (▼) a vedľa toho NAPRAVO (▶)
-    createBtn(gameWidth - marginX - gap, bottomY, '▼', 'down');
+    createBtn(gameWidth - marginX - gap, bottomY, '◀', 'left');
     createBtn(gameWidth - marginX, bottomY, '▶', 'right');
 }
 export function createStatsBubble(scene, player) {
